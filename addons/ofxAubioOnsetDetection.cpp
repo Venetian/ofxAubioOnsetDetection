@@ -13,19 +13,8 @@ ofxAubioOnsetDetection::ofxAubioOnsetDetection(){
 	onsetDetector = new AubioOnsetDetector();
 	onsetDetector->initialise();
 	
-	//qmOnsetDetector = new OnsetDetectionFunction();
-	//qmOnsetDetector->initialise();
-	
-//	aubioOnsetDetect_energy();
 	amplitudeNumber = 256;//number of amplitudes shown on screen
-	dfSample = 0;
-	
-//	threshold = 1;
-//	threshold2 = -70.;
-//	bufsize   = 1024;//using fixed buffer size here.
-//	hopsize   = bufsize / 2;
-	
-	//set this up in AubioOnsetDetector class instead
+
 
 //	useMedianOnsetDetection = true;
 	onsetIndex = 0;
@@ -44,7 +33,7 @@ void ofxAubioOnsetDetection::processFrame(double* frame, const int& n){
 	// aubio onset detector then processes current frame - returns bool true when new detection is output
 	//if buffer full and new result is processed (buffer is 1024 with hopsize 512 - can be set to other values)
 	
-//	dfSample = qmOnsetDetector->getDFsample(frame);
+//	for other class OnsetDetectionFunction : dfSample = qmOnsetDetector->getDFsample(frame);
 	
 	
 	
@@ -52,7 +41,8 @@ void ofxAubioOnsetDetection::processFrame(double* frame, const int& n){
 
 		rawOnsetFunction[onsetIndex] = onsetDetector->rawDetectionValue;
 		medianOnsetFunction[onsetIndex] = onsetDetector->medianDetectionValue;
-		onsetFunction[onsetIndex] = onsetDetector->bestSlopeValue;
+//		aubioOnsetFunction[onsetIndex] = ??;
+		highSlopeOnsetFunction[onsetIndex] = onsetDetector->bestSlopeValue;
 		aubioLongTermAverage[onsetIndex] = onsetDetector->aubioLongTermAverage;
 		
 		//	outlet_float(x->detectionFunctionOutlet, x->onsetDetector->peakPickedDetectionValue);
@@ -66,17 +56,15 @@ void ofxAubioOnsetDetection::processFrame(double* frame, const int& n){
 		
 		
 		if (onsetDetector->anrMedianProcessedOnsetFound){
-		//	onsetFound = true;
+			onsetFound = true;
 			medianOnsetRecorded[onsetIndex] = true;
-		//	outlet_bang(x->medianBangOutlet);
 		}else{
+			onsetFound = false;
 			medianOnsetRecorded[onsetIndex] = false;
 		}
 		
 		if (onsetDetector->anrBestSlopeOnset){
-		//	outlet_bang(x->bangoutlet);
 			highSlopeOnsetRecorded[onsetIndex] = true;
-			
 		}
 		else{
 			highSlopeOnsetRecorded[onsetIndex] = false;
@@ -137,35 +125,39 @@ void ofxAubioOnsetDetection::drawOnsetDetection(){
 		}
 		*/
 		
-		//specDiffOnsets	
-		ofSetColor(55,200,55);
-	//	Xindex = (onsetIndex-Xvalue) ;
-	//	previousIndex = (Xindex-1);
+		ofSetColor(155);//,200,55);
+
+		//raw detection value we use for post processing
 		
 		ofLine((int) (width*(amplitudeNumber - Xvalue - 1)), screenHeight - (scale_factor*(rawOnsetFunction[previousIndex]- minimumValue)), 
 			   (int) (width*(amplitudeNumber - Xvalue)),  screenHeight - (scale_factor*(rawOnsetFunction[Xindex]- minimumValue)) );
 		
-		
-		if (highSlopeOnsetRecorded[Xindex] == true){
-			ofSetColor(255,200,0);
-			ofCircle(width*(amplitudeNumber - Xvalue), screenHeight - (scale_factor*(rawOnsetFunction[Xindex]- minimumValue)) , 3);
-		}
-		
-		//median of Onset fn	
-		ofSetColor(0,105,0);
 
 		
+		//median of Onset fn	
+		ofSetColor(0,105,0);		
 		ofLine((int) (width*(amplitudeNumber - Xvalue - 1)), screenHeight - (scale_factor*(medianOnsetFunction[previousIndex]- minimumValue)), 
 			   (int) (width*(amplitudeNumber - Xvalue)),  screenHeight - (scale_factor*(medianOnsetFunction[Xindex]- minimumValue)) );
 		
 		
 		if (medianOnsetRecorded[Xindex] == true){
-			ofSetColor(255,0,0);
+			ofSetColor(0,255,0);
 			ofCircle(width*(amplitudeNumber - Xvalue), screenHeight - (scale_factor*(medianOnsetFunction[Xindex]- minimumValue)) , 4);
 		}
 		
-		//long term average
-		ofSetColor(160);
+		
+		ofSetColor(0,0,160);
+		ofLine((int) (width*(amplitudeNumber - Xvalue - 1)), screenHeight - (scale_factor*(highSlopeOnsetFunction[previousIndex]- minimumValue)), 
+			   (int) (width*(amplitudeNumber - Xvalue)),  screenHeight - (scale_factor*(highSlopeOnsetFunction[Xindex]- minimumValue)) );
+		
+		//bright blue - slope based onsets
+		if (highSlopeOnsetRecorded[Xindex] == true){
+			ofSetColor(0,0,255);
+			ofCircle(width*(amplitudeNumber - Xvalue), screenHeight - (scale_factor*(highSlopeOnsetFunction[Xindex]- minimumValue)) , 4);
+		}
+		
+		//long term average in dull grey
+		ofSetColor(100);
 		ofLine((int) (width*(amplitudeNumber - Xvalue - 1)), screenHeight - (scale_factor*(aubioLongTermAverage[previousIndex]- minimumValue)), 
 			   (int) (width*(amplitudeNumber - Xvalue)),  screenHeight - (scale_factor*(aubioLongTermAverage[Xindex]- minimumValue)) );
 	

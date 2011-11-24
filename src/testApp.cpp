@@ -6,7 +6,7 @@ const double sampofxPortaudioSoundStreamlingFrequency = 44100.0;
 	
 //--------------------------------------------------------------
 void testApp::setup(){
-
+	
 	/*
 	 soundStream.setup(this, 0, 2, 44100, bufferSize, 4);
 	 */
@@ -40,13 +40,15 @@ void testApp::setup(){
 	//setting up input and output streams
 	//	inputSoundStream.listDevices();	
 	
+	usePortaudioClass = true;
+	
+
 	//ofxSoundStream - class version
 	cout << "Input process setting up input with instance of ofxPortaudioSoundstream ..." << endl;
 	inputDeviceID = 1;//the mic(0)/line input(1) of a mac book pro
 	outputDeviceID = 2;//the headphones out of a macbook pro
 	setInputDevice(inputDeviceID);//includes calling the setup routine etc
 	ofAddListener(inputSoundStream.audioReceivedEvent, this, &testApp::audioInputListener);
-	
 	
 	cout << "Output process, setting up output with instance of ofxPortaudioSoundstream ..." << endl;
 	setOutputDevice(outputDeviceID);
@@ -104,7 +106,7 @@ void testApp::draw(){
 	if (screenToDraw == 0){
 		
 	ofSetColor(166);
-	
+
 	verdana14.drawString("input: "+inputSoundStream.deviceName, 20, 20);
 	verdana14.drawString("output: "+outputSoundStream.deviceName, 20, 60);
 	
@@ -113,7 +115,8 @@ void testApp::draw(){
 	
 	if (showingOutputDevices)
 		showDeviceListWindow(outputSoundStream);
-	
+
+		
 	drawAudioInput();
 	}else{
 	aubioOnsetDetect->drawOnsetDetection();
@@ -272,8 +275,17 @@ void testApp::audioOutputListener(ofxAudioEventArgs &args){
 //--------------------------------------------------------------
 void testApp::keyPressed  (int key){
 	
+	if (key == OF_KEY_UP)
+		aubioOnsetDetect->amplitudeNumber *= 2;
+	
+	if (key == OF_KEY_DOWN && aubioOnsetDetect->amplitudeNumber > 3)
+		aubioOnsetDetect->amplitudeNumber /= 2;
+	
+	
 	if( key == 's' ){
+		
 		inputSoundStream.start();
+		
 		setupFinished = true;
 	}
 
@@ -282,6 +294,7 @@ void testApp::keyPressed  (int key){
 	}
 	
 	if( key == 'e' ){
+	
 		inputSoundStream.stop();
 		setupFinished = false;//stops it making "frozen" audio glitch sound and writes 0.0 to output sound buffer
 	}
@@ -296,6 +309,7 @@ void testApp::keyPressed  (int key){
 	
 
 	if (key == 'u'){
+	
 		setupFinished = false;
 		inputSoundStream.close();
 		inputDeviceID = 0;
@@ -360,6 +374,7 @@ void testApp::mousePressed(int x, int y, int button){
 void testApp::checkPressOnDeviceList(int x, int y){
 	if (mouseX > ofGetWidth() - 360){
 	//check height
+		
 		float deviceNumber = y - deviceListHeightOffset/2;
 		deviceNumber /= deviceListHeightDistance;
 		int deviceInt = (int) round( deviceNumber)-1;
@@ -447,10 +462,9 @@ void testApp::showDeviceListWindow(ofxPortaudioSoundStream& paSoundStream){
 
 void testApp::exit(){
 
-	
 	ofRemoveListener(inputSoundStream.audioReceivedEvent, this, &testApp::audioInputListener);
 	ofRemoveListener(outputSoundStream.audioRequestedEvent, this, &testApp::audioOutputListener);
-	
+
 	leftAudioIn.clear();
 	rightAudioIn.clear();
 	leftAudioOut.clear();

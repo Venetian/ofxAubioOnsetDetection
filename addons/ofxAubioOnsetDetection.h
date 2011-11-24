@@ -56,6 +56,8 @@ public:
 	float			medianOnsetFunction[NUM_DETECTION_SAMPLES];		
 	bool			medianOnsetRecorded[NUM_DETECTION_SAMPLES];
 	
+	float			highSlopeOnsetFunction[NUM_DETECTION_SAMPLES];
+	
 	float			aubioLongTermAverage[NUM_DETECTION_SAMPLES];
 	
 	float			maximumDetectionFunction;
@@ -64,6 +66,7 @@ public:
 	float			maxValue;
 	
 	int				amplitudeNumber;
+	bool			onsetFound;
 
 };
 

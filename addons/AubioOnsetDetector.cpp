@@ -29,6 +29,7 @@ AubioOnsetDetector :: AubioOnsetDetector(){
 	
 	detectionTriggerRatio = 0.5f;
 	detectionTriggerThreshold = 10;
+
 }
 
 AubioOnsetDetector :: ~AubioOnsetDetector(){
@@ -50,6 +51,8 @@ void AubioOnsetDetector :: resetValues(){
 	bestSlopeMedian = 10;
 	slopeFallenBelowMedian = true;
 	maximumDetectionValue = 10.0;
+
+	
 	
 	for (int i = 0;i< numberOfDetectionValues;i++)
 		recentRawDetectionValues[i] = 1;
@@ -284,12 +287,17 @@ return onsetDetected;
  }
  
  
- if (bestValue > bestSlopeMedian)
- bestSlopeMedian += (bestValue - bestSlopeMedian)*0.02;//was 1.1
- else{
- bestSlopeMedian *= 0.99;
- slopeFallenBelowMedian = true;;
- }
+	 if (bestValue > bestSlopeMedian){
+		bestSlopeMedian += (bestValue - bestSlopeMedian)*0.04;//was 1.1
+	 }
+		else{
+			bestSlopeMedian *= 0.99;
+			slopeFallenBelowMedian = true;;
+		}
+	
+	 //bestSlopeMedian += 0.02* (bestValue - bestSlopeMedian);
+	 
+	 
  return onsetDetected;
  }
  

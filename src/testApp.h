@@ -45,7 +45,7 @@ class testApp : public ofBaseApp{
 
 		void showDeviceListWindow(ofxPortaudioSoundStream& paSoundStream);
 
-	
+
 		ofxPortaudioSoundStream inputSoundStream;
 		ofxPortaudioSoundStream outputSoundStream;
 
@@ -101,6 +101,7 @@ class testApp : public ofBaseApp{
 	
 	ofxAubioOnsetDetection* aubioOnsetDetect;
 	int screenToDraw;
+	bool usePortaudioClass;
 	};
 
 #endif
