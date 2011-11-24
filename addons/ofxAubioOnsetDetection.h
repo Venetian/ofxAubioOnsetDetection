@@ -11,7 +11,7 @@
 #ifndef OFX_AUBDIO_ONSET_DETECTION_H_
 #define OFX_AUBIO_ONSET_DETECTION_H_
 
-#define NUM_DETECTION_SAMPLES 6400
+#define NUM_DETECTION_SAMPLES 640
 #define TEXT_HEIGHT 16
 
 #include "ofMain.h"
@@ -48,14 +48,15 @@ public:
 	int onsetIndex;
 	
 	float			onsetFunction[NUM_DETECTION_SAMPLES];
-	bool			onsetRecorded[NUM_DETECTION_SAMPLES];
+	bool			aubioOnsetRecorded[NUM_DETECTION_SAMPLES];
 	
 	float			rawOnsetFunction[NUM_DETECTION_SAMPLES];		
-	bool			rawOnsetRecorded[NUM_DETECTION_SAMPLES];
+	bool			highSlopeOnsetRecorded[NUM_DETECTION_SAMPLES];
 
 	float			medianOnsetFunction[NUM_DETECTION_SAMPLES];		
 	bool			medianOnsetRecorded[NUM_DETECTION_SAMPLES];
 	
+	float			aubioLongTermAverage[NUM_DETECTION_SAMPLES];
 	
 	float			maximumDetectionFunction;
 	float			minimumDetectionFunction;		

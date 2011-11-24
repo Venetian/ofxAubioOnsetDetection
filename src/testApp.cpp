@@ -100,9 +100,10 @@ void testApp::update(){
 
 //--------------------------------------------------------------
 void testApp::draw(){
-	
+	ofBackground(0);
 	if (screenToDraw == 0){
-	ofSetColor(0);
+		
+	ofSetColor(166);
 	
 	verdana14.drawString("input: "+inputSoundStream.deviceName, 20, 20);
 	verdana14.drawString("output: "+outputSoundStream.deviceName, 20, 60);
@@ -275,6 +276,10 @@ void testApp::keyPressed  (int key){
 		inputSoundStream.start();
 		setupFinished = true;
 	}
+
+	if( key == 'w' ){
+		screenToDraw = 1 - screenToDraw;
+	}
 	
 	if( key == 'e' ){
 		inputSoundStream.stop();
@@ -333,9 +338,6 @@ void testApp::mouseDragged(int x, int y, int button){
 //--------------------------------------------------------------
 void testApp::mousePressed(int x, int y, int button){
 
-	
-
-	
 	if (showingInputDevices || showingOutputDevices){
 		checkPressOnDeviceList(x, y);
 	
@@ -419,7 +421,7 @@ void testApp::printInputSampleRate(){
 }
   
 void testApp::showDeviceListWindow(ofxPortaudioSoundStream& paSoundStream){
-	ofSetColor(0,0,0);
+
 	if (showingInputDevices)
 	verdana14.drawString("select input", width - 300, deviceListHeightOffset);
 	else 
@@ -429,7 +431,7 @@ void testApp::showDeviceListWindow(ofxPortaudioSoundStream& paSoundStream){
 		if (abs(mouseY - (deviceListHeightOffset + deviceListHeightDistance*(i+1))) < 16  && mouseX > width - 300)
 			ofSetColor(255,0,0);
 		else
-			ofSetColor(0);
+			ofSetColor(165);
 		if (showingInputDevices && paSoundStream.deviceList[i].maxNumberOfInputs > 0 )
 		verdana14.drawString(paSoundStream.deviceList[i].name, width - 300 , deviceListHeightOffset + deviceListHeightDistance*(i+1));
 	

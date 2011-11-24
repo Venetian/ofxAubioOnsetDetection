@@ -53,14 +53,15 @@ void ofxAubioOnsetDetection::processFrame(double* frame, const int& n){
 		rawOnsetFunction[onsetIndex] = onsetDetector->rawDetectionValue;
 		medianOnsetFunction[onsetIndex] = onsetDetector->medianDetectionValue;
 		onsetFunction[onsetIndex] = onsetDetector->bestSlopeValue;
+		aubioLongTermAverage[onsetIndex] = onsetDetector->aubioLongTermAverage;
 		
 		//	outlet_float(x->detectionFunctionOutlet, x->onsetDetector->peakPickedDetectionValue);
 		
 		if (onsetDetector->aubioOnsetFound){
-			onsetRecorded[onsetIndex] = true;
+			aubioOnsetRecorded[onsetIndex] = true;
 		}
 		else{
-			onsetRecorded[onsetIndex] = true;
+			aubioOnsetRecorded[onsetIndex] = true;
 		}
 		
 		
@@ -74,11 +75,11 @@ void ofxAubioOnsetDetection::processFrame(double* frame, const int& n){
 		
 		if (onsetDetector->anrBestSlopeOnset){
 		//	outlet_bang(x->bangoutlet);
-			rawOnsetRecorded[onsetIndex] = true;
+			highSlopeOnsetRecorded[onsetIndex] = true;
 			
 		}
 		else{
-			rawOnsetRecorded[onsetIndex] = false;
+			highSlopeOnsetRecorded[onsetIndex] = false;
 		}
 		
 		onsetIndex++;
@@ -94,8 +95,7 @@ void ofxAubioOnsetDetection::processFrame(double* frame, const int& n){
 
 
 void ofxAubioOnsetDetection::drawOnsetDetection(){
-	ofColor(200,0,0);
-	ofCircle(200, 200, dfSample * 10);
+	ofBackground(0);
 	
 	float screenWidth = ofGetWidth();
 	float screenHeight = ofGetHeight();
@@ -118,45 +118,57 @@ void ofxAubioOnsetDetection::drawOnsetDetection(){
 	for (int Xvalue = 0;Xvalue < amplitudeNumber; Xvalue++){
 		
 		int Xindex = (onsetIndex-Xvalue) ;
+
 		int previousIndex = (Xindex-1);
+		if (Xindex < 0){
+			Xindex += NUM_DETECTION_SAMPLES;
+			if (previousIndex < 0)
+				previousIndex += NUM_DETECTION_SAMPLES;
+		}
 		
+		/*
 		ofSetColor(55,100,255);
-		
 		ofLine((int) (width*(amplitudeNumber - Xvalue - 1)), screenHeight - (scale_factor*(onsetFunction[previousIndex]- minimumValue)), 
 			   (int) (width*(amplitudeNumber - Xvalue)),  screenHeight - (scale_factor*(onsetFunction[Xindex]- minimumValue)) );
 		
-		if (onsetRecorded[Xindex] == true){
+		if (aubioOnsetRecorded[Xindex] == true){
 			ofSetColor(255,100,255);
 			ofCircle(width*(amplitudeNumber - Xvalue), screenHeight - (scale_factor*(onsetFunction[Xindex]- minimumValue)) , 3);
 		}
+		*/
 		
 		//specDiffOnsets	
-		ofSetColor(55,100,55);
-		Xindex = (onsetIndex-Xvalue) ;
-		previousIndex = (Xindex-1);
+		ofSetColor(55,200,55);
+	//	Xindex = (onsetIndex-Xvalue) ;
+	//	previousIndex = (Xindex-1);
 		
 		ofLine((int) (width*(amplitudeNumber - Xvalue - 1)), screenHeight - (scale_factor*(rawOnsetFunction[previousIndex]- minimumValue)), 
 			   (int) (width*(amplitudeNumber - Xvalue)),  screenHeight - (scale_factor*(rawOnsetFunction[Xindex]- minimumValue)) );
 		
+		
+		if (highSlopeOnsetRecorded[Xindex] == true){
+			ofSetColor(255,200,0);
+			ofCircle(width*(amplitudeNumber - Xvalue), screenHeight - (scale_factor*(rawOnsetFunction[Xindex]- minimumValue)) , 3);
+		}
+		
 		//median of Onset fn	
-		ofSetColor(205,0,0);
-		Xindex = (onsetIndex-Xvalue) ;
-		previousIndex = (Xindex-1);
+		ofSetColor(0,105,0);
+
 		
 		ofLine((int) (width*(amplitudeNumber - Xvalue - 1)), screenHeight - (scale_factor*(medianOnsetFunction[previousIndex]- minimumValue)), 
 			   (int) (width*(amplitudeNumber - Xvalue)),  screenHeight - (scale_factor*(medianOnsetFunction[Xindex]- minimumValue)) );
 		
 		
-		
-		if (rawOnsetRecorded[Xindex] == true){
-			ofSetColor(255,100,0);
-			ofCircle(width*(amplitudeNumber - Xvalue), screenHeight - (scale_factor*(rawOnsetFunction[Xindex]- minimumValue)) , 3);
-		}
-		
 		if (medianOnsetRecorded[Xindex] == true){
 			ofSetColor(255,0,0);
-			ofCircle(width*(amplitudeNumber - Xvalue), screenHeight - (scale_factor*(medianOnsetFunction[Xindex]- minimumValue)) , 3);
+			ofCircle(width*(amplitudeNumber - Xvalue), screenHeight - (scale_factor*(medianOnsetFunction[Xindex]- minimumValue)) , 4);
 		}
+		
+		//long term average
+		ofSetColor(160);
+		ofLine((int) (width*(amplitudeNumber - Xvalue - 1)), screenHeight - (scale_factor*(aubioLongTermAverage[previousIndex]- minimumValue)), 
+			   (int) (width*(amplitudeNumber - Xvalue)),  screenHeight - (scale_factor*(aubioLongTermAverage[Xindex]- minimumValue)) );
+	
 		
 		ofSetColor(255,100,0);
 		
