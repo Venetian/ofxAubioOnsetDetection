@@ -12,7 +12,9 @@ public:
 	void initialise();
 	void resetValues();
 	
+	bool processframe(double* frame, const int& n);
 	bool processframe(float* frame, const int& n);
+	
 	void onsetclass_energy();	
 	void onsetclass_complex();
 	void onsetclass_specdiff();

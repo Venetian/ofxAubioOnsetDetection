@@ -10,7 +10,7 @@ void testApp::setup(){
 	/*
 	 soundStream.setup(this, 0, 2, 44100, bufferSize, 4);
 	 */
-
+	screenToDraw = 1;
 	aubioOnsetDetect = new ofxAubioOnsetDetection();
 	
 	sampleIndex = 0;
@@ -101,6 +101,7 @@ void testApp::update(){
 //--------------------------------------------------------------
 void testApp::draw(){
 	
+	if (screenToDraw == 0){
 	ofSetColor(0);
 	
 	verdana14.drawString("input: "+inputSoundStream.deviceName, 20, 20);
@@ -113,8 +114,9 @@ void testApp::draw(){
 		showDeviceListWindow(outputSoundStream);
 	
 	drawAudioInput();
-	
-	//aubioOnsetDetect->drawOnsetDetection();
+	}else{
+	aubioOnsetDetect->drawOnsetDetection();
+	}
 }
 
 void testApp::drawAudioInput(){
@@ -217,8 +219,6 @@ void testApp::audioInputListener(ofxAudioEventArgs &args){
 		for (int i = 0; i < args.bufferSize; i++){
 			leftAudioIn[i] = args.buffer[i*2];
 			rightAudioIn[i] = args.buffer[i*2+1];
-
-			aubioOnsetDetect->processFrame(&leftAudioIn[0], bufferSize);
 			
 			curVol += leftAudioIn[i] * leftAudioIn[i];
 			numCounted++;
@@ -229,6 +229,8 @@ void testApp::audioInputListener(ofxAudioEventArgs &args){
 		smoothedVol *= 0.93;
 		smoothedVol += 0.07 * curVol;
 
+		aubioOnsetDetect->processFrame(&leftAudioIn[0], bufferSize);
+		
 		bufferCounter++;
 		
 	}//end if we have finished set up the floats to hold the audio

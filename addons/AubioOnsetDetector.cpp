@@ -76,7 +76,7 @@ void AubioOnsetDetector :: postProcessing(){
 	anrBestSlopeOnset =	checkForSlopeOnset(bestSlopeValue);
 }
 
-bool AubioOnsetDetector :: processframe(float* frame, const int& n){
+bool AubioOnsetDetector :: processframe(double* frame, const int& n){
 	bool newFrameResult = false;
 	//Paul Brossier's aubioonsetclass~ code ported from Pd
 		int j,isonset;
@@ -101,7 +101,7 @@ bool AubioOnsetDetector :: processframe(float* frame, const int& n){
 		//Paul Brossier's method to return value of peak picking process
 		
 				
-			//postProcessing();
+			postProcessing();
 				
 	//	smpl_t my_sample_value;
 	peakPickedDetectionValue = aubio_peakpick_pimrt_getval(parms); 
@@ -132,6 +132,65 @@ bool AubioOnsetDetector :: processframe(float* frame, const int& n){
 
 return newFrameResult;
 		
+}
+
+
+bool AubioOnsetDetector :: processframe(float* frame, const int& n){
+	bool newFrameResult = false;
+	//Paul Brossier's aubioonsetclass~ code ported from Pd
+	int j,isonset;
+	for (j=0;j<n;j++) {
+		
+		// write input to datanew 
+		fvec_write_sample(vec, frame[j], 0, pos);//vec->data[0][pos] = frame[j]
+		//time for fft
+		
+		if (pos == hopsize-1) {  //hopsize is 512       
+			newFrameResult = true;
+			aubioOnsetFound = false;
+			
+			// block loop 
+			aubio_pvoc_do (pv,vec, fftgrain);
+			
+			fftgrain->norm[0][0] = fabs(fftgrain->norm[0][0]);
+			//added hack to solve bug that norm[0][0] is negative sometimes.
+			
+			aubio_onsetdetection(o, fftgrain, onset);
+			rawDetectionValue = onset->data[0][0];
+			//Paul Brossier's method to return value of peak picking process
+			
+			
+			postProcessing();
+			
+			//	smpl_t my_sample_value;
+			peakPickedDetectionValue = aubio_peakpick_pimrt_getval(parms); 
+			//peakPickedDetectionValue = my_sample_value;
+			
+			
+			isonset = aubio_peakpick_pimrt(onset,parms);
+			if (isonset) {
+				// test for silence 
+				if (aubio_silence_detection(vec, threshold2)==1){
+					isonset=0;
+				}
+				else{
+					//				outlet_bang(x->bangoutlet);
+					aubioOnsetFound = true;
+				}
+			}//end if (isonset)
+			
+			
+			
+			// end of block loop 
+			pos = -1; // so it will be zero next j loop 
+		}
+		pos++;
+		
+	}//end for j 
+	//end of Paul's code
+	
+	return newFrameResult;
+	
 }
 
 

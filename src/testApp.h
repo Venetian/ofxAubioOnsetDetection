@@ -55,8 +55,8 @@ class testApp : public ofBaseApp{
 	vector <float> leftAudioOut;
 	vector <float> rightAudioOut;
 	
-	vector <float> leftAudioIn;
-	vector <float> rightAudioIn;
+	vector <double> leftAudioIn;
+	vector <double> rightAudioIn;
 
 	
 	float 	volume;
@@ -100,7 +100,7 @@ class testApp : public ofBaseApp{
 	string infoString;
 	
 	ofxAubioOnsetDetection* aubioOnsetDetect;
-
+	int screenToDraw;
 	};
 
 #endif

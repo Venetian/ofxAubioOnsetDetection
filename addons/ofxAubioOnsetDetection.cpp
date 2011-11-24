@@ -12,9 +12,13 @@
 ofxAubioOnsetDetection::ofxAubioOnsetDetection(){
 	onsetDetector = new AubioOnsetDetector();
 	onsetDetector->initialise();
-	aubioOnsetDetect_energy();
-	amplitudeNumber = 256;//number of amplitudes shown on screen
 	
+	//qmOnsetDetector = new OnsetDetectionFunction();
+	//qmOnsetDetector->initialise();
+	
+//	aubioOnsetDetect_energy();
+	amplitudeNumber = 256;//number of amplitudes shown on screen
+	dfSample = 0;
 	
 //	threshold = 1;
 //	threshold2 = -70.;
@@ -22,14 +26,7 @@ ofxAubioOnsetDetection::ofxAubioOnsetDetection(){
 //	hopsize   = bufsize / 2;
 	
 	//set this up in AubioOnsetDetector class instead
-	
-/*
- x->onsetDetector->buffersize = bufsize;
-	x->onsetDetector->hopsize = hopsize;
-	x->onsetDetector->threshold = threshold;
-	x->onsetDetector->threshold2 = threshold2;
-	x->onsetDetector->initialise();
-*/
+
 //	useMedianOnsetDetection = true;
 	onsetIndex = 0;
 	
@@ -38,21 +35,34 @@ ofxAubioOnsetDetection::ofxAubioOnsetDetection(){
 
 ofxAubioOnsetDetection::~ofxAubioOnsetDetection(){
 	delete onsetDetector;
+//	delete qmOnsetDetector;
 }
 
 
-void ofxAubioOnsetDetection::processFrame(float* frame, const int& n){
+void ofxAubioOnsetDetection::processFrame(double* frame, const int& n){
 	//bool onsetFound = false;
 	// aubio onset detector then processes current frame - returns bool true when new detection is output
 	//if buffer full and new result is processed (buffer is 1024 with hopsize 512 - can be set to other values)
 	
+//	dfSample = qmOnsetDetector->getDFsample(frame);
+	
+	
+	
 	if (onsetDetector->processframe(frame, n)){
-/*
+
 		rawOnsetFunction[onsetIndex] = onsetDetector->rawDetectionValue;
 		medianOnsetFunction[onsetIndex] = onsetDetector->medianDetectionValue;
 		onsetFunction[onsetIndex] = onsetDetector->bestSlopeValue;
 		
 		//	outlet_float(x->detectionFunctionOutlet, x->onsetDetector->peakPickedDetectionValue);
+		
+		if (onsetDetector->aubioOnsetFound){
+			onsetRecorded[onsetIndex] = true;
+		}
+		else{
+			onsetRecorded[onsetIndex] = true;
+		}
+		
 		
 		if (onsetDetector->anrMedianProcessedOnsetFound){
 		//	onsetFound = true;
@@ -64,24 +74,28 @@ void ofxAubioOnsetDetection::processFrame(float* frame, const int& n){
 		
 		if (onsetDetector->anrBestSlopeOnset){
 		//	outlet_bang(x->bangoutlet);
-			onsetRecorded[onsetIndex] = true;
+			rawOnsetRecorded[onsetIndex] = true;
 			
 		}
 		else{
-			onsetRecorded[onsetIndex] = false;
+			rawOnsetRecorded[onsetIndex] = false;
 		}
 		
 		onsetIndex++;
 		if (onsetIndex == NUM_DETECTION_SAMPLES)
 			onsetIndex = 0;
 		
- */
+ 
 	}//end if new aubio onset detection result
 	//return onsetFound;
-}
+
+ }
+ 
 
 
 void ofxAubioOnsetDetection::drawOnsetDetection(){
+	ofColor(200,0,0);
+	ofCircle(200, 200, dfSample * 10);
 	
 	float screenWidth = ofGetWidth();
 	float screenHeight = ofGetHeight();
@@ -184,6 +198,7 @@ void ofxAubioOnsetDetection::drawOnsetDetection(){
 	for (int y = labelIndex; y > onsetIndex - amplitudeNumber; y -= stepSize){
 		ofDrawBitmapString( ofToString((int)y), (int) (width*(amplitudeNumber - (onsetIndex - y))), (int) ((TEXT_HEIGHT+2) + (screenHeight - (scale_factor*(0 - minimumValue)))) );
 	}
+	 
 	
 }//end draw onset fn
 
@@ -203,6 +218,7 @@ void ofxAubioOnsetDetection::aubioOnsetDetect_hfc(){
 	 
 	 Paul Masri. Computer modeling of Sound for Transformation and Synthesis of
 	 Musical Signal. PhD dissertation, University of Bristol, UK, 1996.*/
+
 	onsetDetector->onsetclass_hfc();
 	printf("High Frequency Content (Masri '96) detection now used by aubioOnsetDetect~.");
 }
@@ -225,6 +241,7 @@ void ofxAubioOnsetDetection::aubioOnsetDetect_phase(){
 	 detection for music signals. In Proceedings of the IEEE International
 	 Conference on Acoustics Speech and Signal Processing, pages 441­444,
 	 Hong-Kong, 2003.*/
+
 	onsetDetector->onsetclass_phase();
 	printf("Phase-based detection (Bello et al., IEEE '03) now used by aubioOnsetDetect~.");
 }

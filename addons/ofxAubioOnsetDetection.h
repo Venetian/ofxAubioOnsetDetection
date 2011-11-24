@@ -16,6 +16,7 @@
 
 #include "ofMain.h"
 #include "AubioOnsetDetector.h"
+#include "OnsetDetectionFunction.h"
 
 //this builds on aubioOsetDetector class
 //but that doesn't store any values
@@ -27,7 +28,11 @@ public:
 	ofxAubioOnsetDetection();
 	~ofxAubioOnsetDetection();
 	AubioOnsetDetector	*onsetDetector;
-	void processFrame(float* frame, const int& n);
+	//OnsetDetectionFunction *qmOnsetDetector;
+	
+	double dfSample;
+	
+	void processFrame(double* frame, const int& n);
 	
 	//switch between different onset methods
 	void aubioOnsetDetect_energy();
@@ -37,7 +42,7 @@ public:
 	void aubioOnsetDetect_specdiff();
 	void aubioOnsetDetect_phase();//this is pretty bad I think
 	void aubioOnsetDetect_mkl();
-	
+
 	void drawOnsetDetection();
 	
 	int onsetIndex;
