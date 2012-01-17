@@ -18,13 +18,24 @@ ofxAubioOnsetDetection::ofxAubioOnsetDetection(){
 
 //	useMedianOnsetDetection = true;
 	onsetIndex = 0;
-	
+	frameCountIndex = 0;
+	playPositionFrames = 0;
+	playPosition = 0;
 }
 	
+
+
 
 ofxAubioOnsetDetection::~ofxAubioOnsetDetection(){
 	delete onsetDetector;
 //	delete qmOnsetDetector;
+}
+
+void ofxAubioOnsetDetection::reset(){
+	onsetIndex = 0;
+	frameCountIndex = 0;
+	highSlopeOnsetsFrames.clear();
+	highSlopeOnsetsMillis.clear();
 }
 
 
@@ -33,9 +44,7 @@ void ofxAubioOnsetDetection::processFrame(double* frame, const int& n){
 	// aubio onset detector then processes current frame - returns bool true when new detection is output
 	//if buffer full and new result is processed (buffer is 1024 with hopsize 512 - can be set to other values)
 	
-//	for other class OnsetDetectionFunction : dfSample = qmOnsetDetector->getDFsample(frame);
-	
-	
+	//for other class OnsetDetectionFunction : dfSample = qmOnsetDetector->getDFsample(frame);
 	
 	if (onsetDetector->processframe(frame, n)){
 
@@ -65,24 +74,91 @@ void ofxAubioOnsetDetection::processFrame(double* frame, const int& n){
 		
 		if (onsetDetector->anrBestSlopeOnset){
 			highSlopeOnsetRecorded[onsetIndex] = true;
+			highSlopeOnsetsFrames.push_back(frameCountIndex);
+			highSlopeOnsetsMillis.push_back(framesToMillis(frameCountIndex));
+			printf("onset frame %i is time %f \n", frameCountIndex, framesToMillis(frameCountIndex));
 		}
 		else{
 			highSlopeOnsetRecorded[onsetIndex] = false;
 		}
 		
+		frameCountIndex++;//this one never loops
 		onsetIndex++;
 		if (onsetIndex == NUM_DETECTION_SAMPLES)
-			onsetIndex = 0;
+			onsetIndex = 0;//this loops round
 		
  
 	}//end if new aubio onset detection result
 	//return onsetFound;
 
  }
+
+
+
+void ofxAubioOnsetDetection::processFrame(float* frame, const int& n){
+	//bool onsetFound = false;
+	// aubio onset detector then processes current frame - returns bool true when new detection is output
+	//if buffer full and new result is processed (buffer is 1024 with hopsize 512 - can be set to other values)
+	
+	//for other class OnsetDetectionFunction : dfSample = qmOnsetDetector->getDFsample(frame);
+	
+	if (onsetDetector->processframe(frame, n)){
+		
+		rawOnsetFunction[onsetIndex] = onsetDetector->rawDetectionValue;
+		medianOnsetFunction[onsetIndex] = onsetDetector->medianDetectionValue;
+		//		aubioOnsetFunction[onsetIndex] = ??;
+		highSlopeOnsetFunction[onsetIndex] = onsetDetector->bestSlopeValue;
+		aubioLongTermAverage[onsetIndex] = onsetDetector->aubioLongTermAverage;
+		
+		//	outlet_float(x->detectionFunctionOutlet, x->onsetDetector->peakPickedDetectionValue);
+		
+		if (onsetDetector->aubioOnsetFound){
+			aubioOnsetRecorded[onsetIndex] = true;
+		}
+		else{
+			aubioOnsetRecorded[onsetIndex] = true;
+		}
+		
+		
+		if (onsetDetector->anrMedianProcessedOnsetFound){
+			onsetFound = true;
+			medianOnsetRecorded[onsetIndex] = true;
+		}else{
+			onsetFound = false;
+			medianOnsetRecorded[onsetIndex] = false;
+		}
+		
+		if (onsetDetector->anrBestSlopeOnset){
+			highSlopeOnsetRecorded[onsetIndex] = true;
+			highSlopeOnsetsFrames.push_back(frameCountIndex);
+			highSlopeOnsetsMillis.push_back(framesToMillis(frameCountIndex));
+			printf("frame %i is time %f \n", frameCountIndex, framesToMillis(frameCountIndex));
+		}
+		else{
+			highSlopeOnsetRecorded[onsetIndex] = false;
+		}
+		
+		frameCountIndex++;//this one never loops
+		onsetIndex++;
+		if (onsetIndex == NUM_DETECTION_SAMPLES)
+			onsetIndex = 0;//this loops round
+		
+		
+	}//end if new aubio onset detection result
+	//return onsetFound;
+	
+}
+
+
+
+double ofxAubioOnsetDetection::framesToMillis(const double& frameCount){
+	return ((frameCount*onsetDetector->hopsize*1000.0)/44100.0);
+}
  
 
-
 void ofxAubioOnsetDetection::drawOnsetDetection(){
+	drawOnsetDetection(0, amplitudeNumber);
+	/*
 	ofBackground(0);
 	
 	float screenWidth = ofGetWidth();
@@ -106,6 +182,130 @@ void ofxAubioOnsetDetection::drawOnsetDetection(){
 	for (int Xvalue = 0;Xvalue < amplitudeNumber; Xvalue++){
 		
 		int Xindex = (onsetIndex-Xvalue) ;
+		
+		int previousIndex = (Xindex-1);
+		if (Xindex < 0){
+			Xindex += NUM_DETECTION_SAMPLES;
+			if (previousIndex < 0)
+				previousIndex += NUM_DETECTION_SAMPLES;
+		}
+		
+		//onsetFunction[] also processed	but not shown - Brossier's?
+		
+		ofSetColor(155);//,200,55);
+		
+		//raw detection value we use for post processing
+		
+		ofLine((int) (width*(amplitudeNumber - Xvalue - 1)), screenHeight - (scale_factor*(rawOnsetFunction[previousIndex]- minimumValue)), 
+			   (int) (width*(amplitudeNumber - Xvalue)),  screenHeight - (scale_factor*(rawOnsetFunction[Xindex]- minimumValue)) );
+		
+		
+		
+		//median of Onset fn	
+		ofSetColor(0,105,0);		
+		ofLine((int) (width*(amplitudeNumber - Xvalue - 1)), screenHeight - (scale_factor*(medianOnsetFunction[previousIndex]- minimumValue)), 
+			   (int) (width*(amplitudeNumber - Xvalue)),  screenHeight - (scale_factor*(medianOnsetFunction[Xindex]- minimumValue)) );
+		
+		
+		if (medianOnsetRecorded[Xindex] == true){
+			ofSetColor(0,255,0);
+			ofCircle(width*(amplitudeNumber - Xvalue), screenHeight - (scale_factor*(medianOnsetFunction[Xindex]- minimumValue)) , 4);
+		}
+		
+		
+		ofSetColor(0,0,160);
+		ofLine((int) (width*(amplitudeNumber - Xvalue - 1)), screenHeight - (scale_factor*(highSlopeOnsetFunction[previousIndex]- minimumValue)), 
+			   (int) (width*(amplitudeNumber - Xvalue)),  screenHeight - (scale_factor*(highSlopeOnsetFunction[Xindex]- minimumValue)) );
+		
+		//bright blue - slope based onsets
+		if (highSlopeOnsetRecorded[Xindex] == true){
+			ofSetColor(0,0,255);
+			ofCircle(width*(amplitudeNumber - Xvalue), screenHeight - (scale_factor*(highSlopeOnsetFunction[Xindex]- minimumValue)) , 4);
+		}
+		
+		//long term average in dull grey
+		ofSetColor(100);
+		ofLine((int) (width*(amplitudeNumber - Xvalue - 1)), screenHeight - (scale_factor*(aubioLongTermAverage[previousIndex]- minimumValue)), 
+			   (int) (width*(amplitudeNumber - Xvalue)),  screenHeight - (scale_factor*(aubioLongTermAverage[Xindex]- minimumValue)) );
+		
+		
+		ofSetColor(255,100,0);
+		
+	}//end for Xvalue (across the recent observations of osc data)
+	
+	
+	//label y axis
+	int axisHeight, stepSize;
+	ofSetColor(255,255,255);
+	stepSize = 1000;
+	
+	while((difference / stepSize) < 3)
+		stepSize /= 2;
+	
+	while ((difference / stepSize) > 7)// maximum 6 numbers to display
+		stepSize *= 2;
+	
+	
+	for (axisHeight = 0; axisHeight < maximumDetectionFunction; axisHeight += stepSize){
+		ofDrawBitmapString( ofToString((int)axisHeight), ofGetWidth()-50,
+						   (int) ((TEXT_HEIGHT/2) +(screenHeight - (scale_factor*(axisHeight- minimumValue)))) );
+	}
+	
+	for (axisHeight = max(0, (int)minimumDetectionFunction); axisHeight > min(0, (int)minimumDetectionFunction); axisHeight -= stepSize){
+		ofDrawBitmapString( ofToString((int)axisHeight), ofGetWidth()-50,
+						   (int) ((TEXT_HEIGHT/2) +(screenHeight - (scale_factor*(axisHeight- minimumValue)))) );
+	}
+	
+	//label x axis
+	stepSize = 20;//need to make sure not too many of these:
+	
+	while((amplitudeNumber / stepSize) < 4)
+		stepSize /= 2;
+	
+	while ((amplitudeNumber / stepSize) > 8)
+		stepSize *= 2;
+	
+	int labelIndex = onsetIndex - (onsetIndex % stepSize);
+	for (int y = labelIndex; y > onsetIndex - amplitudeNumber; y -= stepSize){
+		ofDrawBitmapString( ofToString((int)y), (int) (width*(amplitudeNumber - (onsetIndex - y))), (int) ((TEXT_HEIGHT+2) + (screenHeight - (scale_factor*(0 - minimumValue)))) );
+	}
+	
+	
+	//play position
+	ofSetColor(255,255,255);
+	playPositionFrames = playPosition * frameCountIndex;
+	ofLine(width*playPositionFrames, 0, width*playPositionFrames, screenHeight);
+	
+	*/
+	
+}//end draw onset fn
+
+
+
+void ofxAubioOnsetDetection::drawOnsetDetection(int startIndex, int endIndex){
+	ofBackground(0);
+	
+	float screenWidth = ofGetWidth();
+	float screenHeight = ofGetHeight();
+	
+	int tmpIndex = onsetIndex;
+	float width = screenWidth / (float) amplitudeNumber;	
+	float maximumValue = onsetDetector->maximumDetectionValue;
+	
+	
+	float minimumValue = 0;//minimumDetectionFunction ;
+	float difference = maximumValue - minimumValue;
+	float scale_factor = screenHeight/ difference;
+	
+	//draw axis
+	ofSetColor(255,255,255);
+	ofLine(0, screenHeight - (scale_factor*(0 - minimumValue)), 
+		   (int) (width*(amplitudeNumber)),  screenHeight - (scale_factor*(0 - minimumValue)) );
+	
+	
+	for (int Xvalue = startIndex;Xvalue < min(endIndex, amplitudeNumber); Xvalue++){
+		
+		int Xindex = (endIndex - Xvalue) ;
 
 		int previousIndex = (Xindex-1);
 		if (Xindex < 0){
@@ -114,17 +314,8 @@ void ofxAubioOnsetDetection::drawOnsetDetection(){
 				previousIndex += NUM_DETECTION_SAMPLES;
 		}
 		
-		/*
-		ofSetColor(55,100,255);
-		ofLine((int) (width*(amplitudeNumber - Xvalue - 1)), screenHeight - (scale_factor*(onsetFunction[previousIndex]- minimumValue)), 
-			   (int) (width*(amplitudeNumber - Xvalue)),  screenHeight - (scale_factor*(onsetFunction[Xindex]- minimumValue)) );
-		
-		if (aubioOnsetRecorded[Xindex] == true){
-			ofSetColor(255,100,255);
-			ofCircle(width*(amplitudeNumber - Xvalue), screenHeight - (scale_factor*(onsetFunction[Xindex]- minimumValue)) , 3);
-		}
-		*/
-		
+		//onsetFunction[] also processed	but not shown - Brossier's?
+			
 		ofSetColor(155);//,200,55);
 
 		//raw detection value we use for post processing
@@ -203,6 +394,12 @@ void ofxAubioOnsetDetection::drawOnsetDetection(){
 		ofDrawBitmapString( ofToString((int)y), (int) (width*(amplitudeNumber - (onsetIndex - y))), (int) ((TEXT_HEIGHT+2) + (screenHeight - (scale_factor*(0 - minimumValue)))) );
 	}
 	 
+	
+	//play position
+	ofSetColor(255,255,255);
+	playPositionFrames = playPosition * frameCountIndex;
+	ofLine(width*playPositionFrames, 0, width*playPositionFrames, screenHeight);
+
 	
 }//end draw onset fn
 

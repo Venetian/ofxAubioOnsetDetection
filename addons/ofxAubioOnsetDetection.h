@@ -11,17 +11,26 @@
 #ifndef OFX_AUBDIO_ONSET_DETECTION_H_
 #define OFX_AUBIO_ONSET_DETECTION_H_
 
-#define NUM_DETECTION_SAMPLES 640
+#define NUM_DETECTION_SAMPLES 64000
 #define TEXT_HEIGHT 16
 
 #include "ofMain.h"
 #include "AubioOnsetDetector.h"
-#include "OnsetDetectionFunction.h"
+//#include "OnsetDetectionFunction.h"
 
 //this builds on aubioOsetDetector class
 //but that doesn't store any values
 //for drawing, perhpas we need to
 
+/*
+ struct chromaOnset {
+	chromaOnset();
+	double millisTime;
+	int frameTime;
+	//chromagram chroma;
+	bool chromaCalculated;
+};
+*/
 
 class ofxAubioOnsetDetection{
 public:
@@ -30,10 +39,12 @@ public:
 	AubioOnsetDetector	*onsetDetector;
 	//OnsetDetectionFunction *qmOnsetDetector;
 	
+	void reset();
+	
 	double dfSample;
 	
 	void processFrame(double* frame, const int& n);
-	
+	void processFrame(float* frame, const int& n);
 	//switch between different onset methods
 	void aubioOnsetDetect_energy();
 	void aubioOnsetDetect_complex();
@@ -44,17 +55,19 @@ public:
 	void aubioOnsetDetect_mkl();
 
 	void drawOnsetDetection();
+	void drawOnsetDetection(int startIndex, int endIndex);
 	
-	int onsetIndex;
+	int onsetIndex, frameCountIndex;
+	
 	
 	float			onsetFunction[NUM_DETECTION_SAMPLES];
 	bool			aubioOnsetRecorded[NUM_DETECTION_SAMPLES];
 	
 	float			rawOnsetFunction[NUM_DETECTION_SAMPLES];		
-	bool			highSlopeOnsetRecorded[NUM_DETECTION_SAMPLES];
+	bool			highSlopeOnsetRecorded[NUM_DETECTION_SAMPLES];//true/false for onset
 
 	float			medianOnsetFunction[NUM_DETECTION_SAMPLES];		
-	bool			medianOnsetRecorded[NUM_DETECTION_SAMPLES];
+	bool			medianOnsetRecorded[NUM_DETECTION_SAMPLES];//true/false for onset
 	
 	float			highSlopeOnsetFunction[NUM_DETECTION_SAMPLES];
 	
@@ -67,7 +80,12 @@ public:
 	
 	int				amplitudeNumber;
 	bool			onsetFound;
-
+	
+	typedef std::vector<double> DoubleVector;
+	DoubleVector highSlopeOnsetsFrames;
+	DoubleVector highSlopeOnsetsMillis;
+	double framesToMillis(const double& frameCount);
+	double playPosition, playPositionFrames;
 };
 
 

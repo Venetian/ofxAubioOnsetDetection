@@ -73,6 +73,7 @@ public:
 	float detectionTriggerThreshold, detectionTriggerRatio;
 	float maximumDetectionValue;
 	
+	
 };
 
 #endif
