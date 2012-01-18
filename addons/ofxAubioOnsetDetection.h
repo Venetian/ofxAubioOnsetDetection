@@ -16,21 +16,16 @@
 
 #include "ofMain.h"
 #include "AubioOnsetDetector.h"
+#include "ChromaOnset.h"
+
 //#include "OnsetDetectionFunction.h"
 
 //this builds on aubioOsetDetector class
 //but that doesn't store any values
 //for drawing, perhpas we need to
 
-/*
- struct chromaOnset {
-	chromaOnset();
-	double millisTime;
-	int frameTime;
-	//chromagram chroma;
-	bool chromaCalculated;
-};
-*/
+
+
 
 class ofxAubioOnsetDetection{
 public:
@@ -45,6 +40,9 @@ public:
 	
 	void processFrame(double* frame, const int& n);
 	void processFrame(float* frame, const int& n);
+	
+	void printOnsetList();//print the vector of chromaOnset times - onsets with timing and chroma info
+	
 	//switch between different onset methods
 	void aubioOnsetDetect_energy();
 	void aubioOnsetDetect_complex();
@@ -86,6 +84,9 @@ public:
 	DoubleVector highSlopeOnsetsMillis;
 	double framesToMillis(const double& frameCount);
 	double playPosition, playPositionFrames;
+	
+	typedef std::vector<ChromaOnset> ChromaOnsetVector;
+	ChromaOnsetVector chromaOnsets;
 };
 
 

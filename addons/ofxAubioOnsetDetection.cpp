@@ -9,6 +9,7 @@
 
 #include "ofxAubioOnsetDetection.h"
 
+
 ofxAubioOnsetDetection::ofxAubioOnsetDetection(){
 	onsetDetector = new AubioOnsetDetector();
 	onsetDetector->initialise();
@@ -77,6 +78,10 @@ void ofxAubioOnsetDetection::processFrame(double* frame, const int& n){
 			highSlopeOnsetsFrames.push_back(frameCountIndex);
 			highSlopeOnsetsMillis.push_back(framesToMillis(frameCountIndex));
 			printf("onset frame %i is time %f \n", frameCountIndex, framesToMillis(frameCountIndex));
+			ChromaOnset c;
+			c.frameTime = frameCountIndex;
+			c.millisTime = framesToMillis(frameCountIndex);
+			chromaOnsets.push_back(c);
 		}
 		else{
 			highSlopeOnsetRecorded[onsetIndex] = false;
@@ -132,6 +137,11 @@ void ofxAubioOnsetDetection::processFrame(float* frame, const int& n){
 			highSlopeOnsetRecorded[onsetIndex] = true;
 			highSlopeOnsetsFrames.push_back(frameCountIndex);
 			highSlopeOnsetsMillis.push_back(framesToMillis(frameCountIndex));
+			ChromaOnset c;
+			c.frameTime = frameCountIndex;
+			c.millisTime = framesToMillis(frameCountIndex);
+			chromaOnsets.push_back(c);
+			
 			printf("frame %i is time %f \n", frameCountIndex, framesToMillis(frameCountIndex));
 		}
 		else{
@@ -145,6 +155,13 @@ void ofxAubioOnsetDetection::processFrame(float* frame, const int& n){
 		
 		
 	}//end if new aubio onset detection result
+	
+	for (int i = 0;i < chromaOnsets.size();i++){
+		if (chromaOnsets[i].processFrame(frame, n)){
+			printf("onset %i (%i) is newly calculated at frame %i\n", i, chromaOnsets[i].frameTime, frameCountIndex);
+		}
+	}
+	
 	//return onsetFound;
 	
 }
@@ -281,6 +298,12 @@ void ofxAubioOnsetDetection::drawOnsetDetection(){
 }//end draw onset fn
 
 
+void ofxAubioOnsetDetection::printOnsetList(){
+	printf("PRINT ONSET LIST");
+	for (int i = 0;i < chromaOnsets.size();i++){
+		chromaOnsets[i].printInfo();
+	}
+}
 
 void ofxAubioOnsetDetection::drawOnsetDetection(int startIndex, int endIndex){
 	ofBackground(0);
