@@ -16,7 +16,7 @@ FrameHolder::FrameHolder(){
 //	buffersize = 8192;
 
 //	vec = (fvec_t *)new_fvec(buffersize,1);
-	printf("initialise frameholder\n");
+	//printf("initialise frameholder\n");
 }
 
 
@@ -33,7 +33,7 @@ void FrameHolder::addToFrame(float* newAudio, const int& length){
 	}
 	
 	sizeOfFrame = frame.size();
-	printf("framesize %i\n", sizeOfFrame);
+	//printf("framesize %i\n", sizeOfFrame);
 }
 
 bool FrameHolder::sizeEquals(const int& length){

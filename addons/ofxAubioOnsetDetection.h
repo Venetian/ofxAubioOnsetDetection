@@ -26,7 +26,13 @@
 //for drawing, perhpas we need to
 
 
-
+struct DrawOnsetParameters{
+	float width;//= screenWidth / (float) amplitudeNumber;	
+	float maximumValue;// = onsetDetector->maximumDetectionValue;
+	float minimumValue;// = 0;//minimumDetectionFunction ;
+	float difference;// = maximumValue - minimumValue;
+	float scale_factor;// = screenHeight/ difference;
+};
 
 class ofxAubioOnsetDetection{
 public:
@@ -54,6 +60,7 @@ public:
 	void aubioOnsetDetect_mkl();
 
 	void drawOnsetDetection();
+	void drawOnsetDetectionScrolling();//float of how far thru file - e.g 0.6 60% through
 	void drawOnsetDetection(int startIndex, int endIndex);
 	
 	int onsetIndex, frameCountIndex;
@@ -90,16 +97,17 @@ public:
 	ChromaOnsetVector chromaOnsets;
 	
 	void checkChromaAndPitch(float* tmpFrame, const int& n);
+	void drawChromaOnsetData(const int& startIndex, const int& endIndex);
+	DrawOnsetParameters drawParams;
+	void setDrawParams();
 	
 	AubioPitch pitchDetector;
+	float	maximumAubioPitch;
 	
-	/*
-	 AUBIO f_vec
-	 struct _fvec_t {
-	 ba_uint_t length;   /**< length of buffer 
-	ba_uint_t channels; /**< number of channels 
-	smpl_t **data;   /**< data array of size [length] * [channels] 
-	 */
+	//basic screen stuff
+	float screenWidth;//= ofGetWidth();
+	float screenHeight;// = ofGetHeight();
+	void windowResized(const int& w, const int& h);
 };
 
 

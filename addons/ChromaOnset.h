@@ -42,7 +42,7 @@ class ChromaOnset {
 	
 	FrameHolder onsetFrame;
 	
-	
+	int onsetIndex;//in terms of our onset detection fn - ofxAubioOnsetDetector
 	void printInfo();
 };
 #endif

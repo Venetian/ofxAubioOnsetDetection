@@ -16,8 +16,8 @@ AubioPitch::AubioPitch(){
 	
 	aubio_pitchdetection_type type_pitch = aubio_pitch_yinfft;
 	aubio_pitchdetection_mode mode_pitch = aubio_pitchm_freq;
-	
-	pitchDetect = new_aubio_pitchdetection(bufsize*4, hopsize, 1, 44100., type_pitch, mode_pitch);
+//	bufsize*4 below
+	pitchDetect = new_aubio_pitchdetection(bufsize, hopsize, 1, 44100., type_pitch, mode_pitch);
 	
 	aubio_pitchdetection_set_yinthresh(pitchDetect, 0.7);
 	
@@ -74,7 +74,15 @@ float AubioPitch::doPitchDetection(float* frame, const int& length){
 		
 		
 		newPitch = aubio_pitchdetection(pitchDetect, tmpVec);
-		printf("NEW PITCH FOUND %f\n", newPitch);
+	//	printf("NEW PITCH FOUND %f\n", newPitch);
 	}
 	return newPitch;
 }
+
+/*This is the fvec_t defn from aubio:
+ AUBIO f_vec
+ struct _fvec_t {
+ ba_uint_t length;   /**< length of buffer 
+ ba_uint_t channels; /**< number of channels 
+ smpl_t **data;   /**< data array of size [length] * [channels] 
+ */

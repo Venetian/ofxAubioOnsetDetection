@@ -103,11 +103,10 @@ bool AubioOnsetDetector :: processframe(double* frame, const int& n){
 				
 			postProcessing();
 				
-	//	smpl_t my_sample_value;
-	peakPickedDetectionValue = aubio_peakpick_pimrt_getval(parms); 
-	//peakPickedDetectionValue = my_sample_value;
+			//	smpl_t my_sample_value;
+			peakPickedDetectionValue = aubio_peakpick_pimrt_getval(parms); 
+			//peakPickedDetectionValue = my_sample_value;
 
-		
 			isonset = aubio_peakpick_pimrt(onset,parms);
 			if (isonset) {
 				// test for silence 

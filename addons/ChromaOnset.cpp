@@ -17,6 +17,9 @@ ChromaOnset::ChromaOnset(){
 	chromaSize = 2048;
 	cgram.initialise(512, chromaSize);
 	
+	onsetIndex = 0;
+
+	
 	//we also store an aubio pitch result - using a Frameholder to hold the frames we need to calculate this on
 	aubioPitch = 0;
 	aubioPitchFound = false;
@@ -33,7 +36,7 @@ bool ChromaOnset::processFrame(float* frame, const int& length){
 		if (cgram.chromaready){
 			
 			for (int i = 0;i < 12;i++){
-				chromaValues.push_back(cgram.rawChroma[i]);
+				chromaValues.push_back(cgram.rawChroma[i]/cgram.maximumChromaValue);
 			}
 			chromaCalculated = true;
 			newlyCalculated = true;
