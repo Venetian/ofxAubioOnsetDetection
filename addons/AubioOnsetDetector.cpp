@@ -57,6 +57,8 @@ void AubioOnsetDetector :: resetValues(){
 	for (int i = 0;i< numberOfDetectionValues;i++)
 		recentRawDetectionValues[i] = 1;
 	
+	
+	
 }
 
 

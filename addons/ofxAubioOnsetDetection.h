@@ -18,6 +18,7 @@
 #include "AubioOnsetDetector.h"
 #include "ChromaOnset.h"
 
+
 //#include "OnsetDetectionFunction.h"
 
 //this builds on aubioOsetDetector class
@@ -87,6 +88,18 @@ public:
 	
 	typedef std::vector<ChromaOnset> ChromaOnsetVector;
 	ChromaOnsetVector chromaOnsets;
+	
+	void checkChromaAndPitch(float* tmpFrame, const int& n);
+	
+	AubioPitch pitchDetector;
+	
+	/*
+	 AUBIO f_vec
+	 struct _fvec_t {
+	 ba_uint_t length;   /**< length of buffer 
+	ba_uint_t channels; /**< number of channels 
+	smpl_t **data;   /**< data array of size [length] * [channels] 
+	 */
 };
 
 

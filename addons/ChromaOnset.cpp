@@ -16,6 +16,10 @@ ChromaOnset::ChromaOnset(){
 	chromaCalculated = false;
 	chromaSize = 2048;
 	cgram.initialise(512, chromaSize);
+	
+	aubioPitchFound = false;
+	
+	aubioPitchDetector = new AubioPitch();
 //	cgram = new Chromagram();
 }
 
@@ -29,7 +33,6 @@ bool ChromaOnset::processFrame(float* frame, const int& length){
 			
 			for (int i = 0;i < 12;i++){
 				chromaValues.push_back(cgram.rawChroma[i]);
-				printf("[%i] %f\n", i, chromaValues[i]);
 			}
 			chromaCalculated = true;
 			newlyCalculated = true;
@@ -40,12 +43,19 @@ bool ChromaOnset::processFrame(float* frame, const int& length){
 		}
 		
 	}
-			 
+	
 	return newlyCalculated;
 }
 
 
 void ChromaOnset::printInfo(){
 
-	printf("ONSET : frametime %i, millis %f\n", frameTime, millisTime);
+	printf("ONSET : frametime %i, millis %f pitch %f\n", frameTime, millisTime, aubioPitch);
+	printf("chroma: ");
+	
+	for(int i = 0;i < 12;i++)
+			printf("[%i] %1.3f, ", i, chromaValues[i]);
+	
+	printf(".\n");
+	
 }

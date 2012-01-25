@@ -12,6 +12,8 @@
 
 #include "ofMain.h"
 #include "chromaGram.h"
+#include "AubioPitch.h"
+#include "FrameHolder.h"
 
 class ChromaOnset {
 	public:
@@ -28,10 +30,18 @@ class ChromaOnset {
 //	void calculateChroma(float* frame, const int& length);
 
 	Chromagram cgram;
-
+	
 	FloatVector chromaValues;
 	
 	float holder[512];
+	
+	//also do pitch detection using this class
+	AubioPitch *aubioPitchDetector;
+	bool aubioPitchFound;
+	float aubioPitch;
+	
+	FrameHolder onsetFrame;
+	
 	
 	void printInfo();
 };
