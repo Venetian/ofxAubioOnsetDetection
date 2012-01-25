@@ -112,38 +112,24 @@ void ofxAubioOnsetDetection::checkChromaAndPitch(float* tmpFrame, const int& n){
 	//process frames into each onset's chromagram analyser
 	for (int i = 0;i < chromaOnsets.size();i++){
 		
+		//aubio pitch using yin
+		if (!chromaOnsets[i].aubioPitchFound ){//not yet done
+			chromaOnsets[i].onsetFrame.addToFrame(tmpFrame, n);//add to frame in the chromaOnset class
 		
-		if (!chromaOnsets[i].aubioPitchFound ){
-			chromaOnsets[i].onsetFrame.addToFrame(tmpFrame, n);
-			printf("onset frames[%i] is %i found (%s) and bufsize %i\n", i, chromaOnsets[i].onsetFrame.sizeOfFrame, (chromaOnsets[i].aubioPitchFound)?"true":"false", pitchDetector.bufsize);
-	
-			if (chromaOnsets[i].onsetFrame.sizeOfFrame >= pitchDetector.bufsize){
-				printf("processing\n");
-				//got the right number of frames for aubio pitch detection
+			if (chromaOnsets[i].onsetFrame.sizeOfFrame >= pitchDetector.bufsize){//enough to calculate yin with using aubio pitch detection
 				chromaOnsets[i].aubioPitch = pitchDetector.doPitchDetection(&chromaOnsets[i].onsetFrame.frame[0], pitchDetector.bufsize);
 				chromaOnsets[i].aubioPitchFound = true;
-				printf("PItch recieved for onset %i is %f\n", i, chromaOnsets[i].aubioPitch);
+		//		printf("Aubio Pitch recieved for onset %i is %f\n", i, chromaOnsets[i].aubioPitch);
 			}
 				
 		}
 		
 		
 		//chroma
-		
-		
-		
 		if (chromaOnsets[i].processFrame(tmpFrame, n)){
-			printf("onset %i (frametime %i) is newly calculated at frame %i\n", i, chromaOnsets[i].frameTime, frameCountIndex);
+			//printf("onset %i (frametime %i) is newly calculated at frame %i\n", i, chromaOnsets[i].frameTime, frameCountIndex);
 		}
-		/*
-		//pitch
-		if (!chromaOnsets[i].aubioPitchFound && chromaOnsets[i].aubioPitchDetector.processFrame(tmpFrame, n)){
-			chromaOnsets[i].aubioPitch = chromaOnsets[i].aubioPitchDetector.pitch;
-			chromaOnsets[i].aubioPitchFound = true;
-			printf("aubio pitch for onset at time %f is %f Hz\n", chromaOnsets[i].millisTime , chromaOnsets[i].aubioPitch);
-			
-		}
-		 */
+		
 	}//end for all onsets
 }
 

@@ -12,7 +12,7 @@
 
 #include "ofMain.h"
 #include "chromaGram.h"
-#include "AubioPitch.h"
+//#include "AubioPitch.h"
 #include "FrameHolder.h"
 
 class ChromaOnset {
@@ -36,7 +36,7 @@ class ChromaOnset {
 	float holder[512];
 	
 	//also do pitch detection using this class
-	AubioPitch *aubioPitchDetector;
+	//AubioPitch *aubioPitchDetector;
 	bool aubioPitchFound;
 	float aubioPitch;
 	

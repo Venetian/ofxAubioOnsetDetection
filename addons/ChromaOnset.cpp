@@ -17,9 +17,10 @@ ChromaOnset::ChromaOnset(){
 	chromaSize = 2048;
 	cgram.initialise(512, chromaSize);
 	
+	//we also store an aubio pitch result - using a Frameholder to hold the frames we need to calculate this on
+	aubioPitch = 0;
 	aubioPitchFound = false;
-	
-	aubioPitchDetector = new AubioPitch();
+//	aubioPitchDetector = new AubioPitch();
 //	cgram = new Chromagram();
 }
 
