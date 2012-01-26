@@ -17,7 +17,7 @@
 #include "ofMain.h"
 #include "AubioOnsetDetector.h"
 #include "ChromaOnset.h"
-
+#include "ofxWindowRegion.h"
 
 //#include "OnsetDetectionFunction.h"
 
@@ -62,7 +62,7 @@ public:
 	void drawOnsetDetection();
 	void drawOnsetDetectionScrolling();//float of how far thru file - e.g 0.6 60% through
 	void drawOnsetDetection(int startIndex, int endIndex);
-	
+	void drawOnsetDetection(int startIndex, int endIndex, const ofxWindowRegion& screenRegion);//overloaded
 	int onsetIndex, frameCountIndex;
 	
 	
@@ -108,6 +108,8 @@ public:
 	float screenWidth;//= ofGetWidth();
 	float screenHeight;// = ofGetHeight();
 	void windowResized(const int& w, const int& h);
+	
+	ofxWindowRegion window;
 };
 
 

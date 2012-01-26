@@ -10,6 +10,9 @@
 #include "ofxAubioOnsetDetection.h"
 
 
+//@ do: fix up reset - maybe think of using vectors
+
+
 ofxAubioOnsetDetection::ofxAubioOnsetDetection(){
 	onsetDetector = new AubioOnsetDetector();
 	onsetDetector->initialise();
@@ -27,6 +30,9 @@ ofxAubioOnsetDetection::ofxAubioOnsetDetection(){
 	
 	screenWidth = ofGetWidth();
 	screenHeight = ofGetHeight();
+	
+	window.setToRelativeSize(0.1, 0.1, 0.8, 0.3);
+	
 }
 	
 
@@ -40,6 +46,15 @@ ofxAubioOnsetDetection::~ofxAubioOnsetDetection(){
 void ofxAubioOnsetDetection::reset(){
 	onsetIndex = 0;
 	frameCountIndex = 0;
+	
+	for (int i = 0;i < NUM_DETECTION_SAMPLES;i++){
+		onsetFunction[i] = 0;
+		medianOnsetFunction[i] = 0;
+		highSlopeOnsetFunction[i] = 0;
+		
+	}
+	
+	
 	highSlopeOnsetsFrames.clear();
 	highSlopeOnsetsMillis.clear();//The high slope onsets are the ones stored as chromaOnsets
 	//(i.e. have associated chroma and pitch to them)
@@ -120,11 +135,11 @@ void ofxAubioOnsetDetection::checkChromaAndPitch(float* tmpFrame, const int& n){
 		//aubio pitch using yin
 		if (!chromaOnsets[i].aubioPitchFound ){//not yet done
 			chromaOnsets[i].onsetFrame.addToFrame(tmpFrame, n);//add to frame in the chromaOnset class
-			printf("adding to frame for onset %i at frametime %i\n", i, frameCountIndex);
+		//	printf("adding to frame for onset %i at frametime %i\n", i, frameCountIndex);
 			if (chromaOnsets[i].onsetFrame.sizeOfFrame >= pitchDetector.bufsize){//enough to calculate yin with using aubio pitch detection
 				chromaOnsets[i].aubioPitch = pitchDetector.doPitchDetection(&chromaOnsets[i].onsetFrame.frame[0], pitchDetector.bufsize);
 				chromaOnsets[i].aubioPitchFound = true;
-				printf("Aubio Pitch recieved for onset %i is %f\n", i, chromaOnsets[i].aubioPitch);
+		//		printf("Aubio Pitch recieved for onset %i is %f\n", i, chromaOnsets[i].aubioPitch);
 			}
 				
 		}
@@ -132,7 +147,7 @@ void ofxAubioOnsetDetection::checkChromaAndPitch(float* tmpFrame, const int& n){
 		
 		//chroma
 		if (chromaOnsets[i].processFrame(tmpFrame, n)){
-			printf("onset %i (frametime %i) chroma is newly calculated at frame %i\n", i, chromaOnsets[i].frameTime, frameCountIndex);
+	//		printf("onset %i (frametime %i) chroma is newly calculated at frame %i\n", i, chromaOnsets[i].frameTime, frameCountIndex);
 			chromaOnsets[i].printInfo();
 		}
 		
@@ -188,7 +203,7 @@ void ofxAubioOnsetDetection::processFrame(float* frame, const int& n){
 		//	c.aubioPitchFound = false;c.chromaCalculated = false;
 			chromaOnsets.push_back(c);
 			
-			printf("frame %i is time %f \n", frameCountIndex, framesToMillis(frameCountIndex));
+		//	printf("frame %i is time %f \n", frameCountIndex, framesToMillis(frameCountIndex));
 		}
 		else{
 			highSlopeOnsetRecorded[onsetIndex] = false;
@@ -213,7 +228,7 @@ double ofxAubioOnsetDetection::framesToMillis(const double& frameCount){
  
 
 void ofxAubioOnsetDetection::drawOnsetDetection(){
-	drawOnsetDetection(0, amplitudeNumber);
+	drawOnsetDetection(0, amplitudeNumber, window);
 
 	
 }//end draw onset fn
@@ -222,7 +237,7 @@ void ofxAubioOnsetDetection::drawOnsetDetectionScrolling(){
 	
 	int startFrame = (int)(playPositionFrames/amplitudeNumber)* amplitudeNumber;
 	
-	drawOnsetDetection(startFrame, startFrame+amplitudeNumber);
+	drawOnsetDetection(startFrame, startFrame+amplitudeNumber, window);
 		
 }//end draw onset fn
 
@@ -248,14 +263,18 @@ void ofxAubioOnsetDetection::drawOnsetDetection(int startIndex, int endIndex){
 	
 	//draw axis
 	ofSetColor(255,255,255);
+	ofDrawBitmapString(ofToString((startIndex)), 20, 20);
+	
 	ofLine(0, screenHeight - (scale_factor*(0 - minimumValue)), 
 		   (int) (width*(amplitudeNumber)),  screenHeight - (scale_factor*(0 - minimumValue)) );
 	
 	drawChromaOnsetData(startIndex, endIndex);
 	
-	for (int Xvalue = startIndex;Xvalue < min(endIndex, amplitudeNumber); Xvalue++){
+	endIndex = min(endIndex, startIndex+amplitudeNumber);
+
+	for (int Xvalue = startIndex;Xvalue < endIndex; Xvalue++){
 		
-		int Xindex = (endIndex - Xvalue) ;
+		int Xindex = Xvalue;//(endIndex - Xvalue) ;
 
 		int previousIndex = (Xindex-1);
 		if (Xindex < 0){
@@ -266,11 +285,12 @@ void ofxAubioOnsetDetection::drawOnsetDetection(int startIndex, int endIndex){
 		
 		//onsetFunction[] also processed	but not shown - Brossier's?
 			
+		
 		ofSetColor(155);//,200,55);
 
-		//raw detection value we use for post processing
-		int previousXpos = (int) (width*(amplitudeNumber - Xvalue + startIndex - 1));
-		int Xpos = (int) (width*(amplitudeNumber - Xvalue + startIndex));				  
+
+		int previousXpos = (int) (width*(Xvalue - startIndex - 1));
+		int Xpos = (int) (width*(Xvalue - startIndex));		
 		
 		ofLine(previousXpos, screenHeight - (scale_factor*(rawOnsetFunction[previousIndex]- minimumValue)), 
 			   Xpos,  screenHeight - (scale_factor*(rawOnsetFunction[Xindex]- minimumValue)) );
@@ -357,6 +377,143 @@ void ofxAubioOnsetDetection::drawOnsetDetection(int startIndex, int endIndex){
 }//end draw onset fn
 
 
+
+
+
+void ofxAubioOnsetDetection::drawOnsetDetection(int startIndex, int endIndex, const ofxWindowRegion& screenRegion){
+	
+	ofBackground(0);
+	setDrawParams();
+	ofSetColor(160,160,0);
+	screenRegion.drawOutline();
+	
+	int tmpIndex = onsetIndex;
+	float width = screenRegion.width / (float) amplitudeNumber;	
+	float maximumValue = onsetDetector->maximumDetectionValue;
+	float minimumValue = 0;//minimumDetectionFunction ;
+	float difference = maximumValue - minimumValue;
+	float scale_factor = screenRegion.height/ difference;
+	
+	//draw axis
+	ofSetColor(255,255,255);
+	ofDrawBitmapString("window region"+ofToString(screenRegion.x), 20, 20);
+	
+	ofLine(screenRegion.x + 0, screenRegion.y + screenRegion.height - (scale_factor*(0 - minimumValue)), 
+		   screenRegion.x + (int) (width*(amplitudeNumber)),  screenRegion.y + screenRegion.height - (scale_factor*(0 - minimumValue)) );
+	
+	//drawChromaOnsetData(startIndex, endIndex);
+	
+	endIndex = min(endIndex, startIndex+amplitudeNumber);
+	
+	for (int Xvalue = startIndex;Xvalue < endIndex; Xvalue++){
+		
+		int Xindex = Xvalue;//(endIndex - Xvalue) ;
+		
+		int previousIndex = (Xindex-1);
+		if (Xindex < 0){
+			Xindex += NUM_DETECTION_SAMPLES;
+			if (previousIndex < 0)
+				previousIndex += NUM_DETECTION_SAMPLES;
+		}
+		
+		//onsetFunction[] also processed	but not shown - Brossier's?
+		
+		
+		ofSetColor(155);//,200,55);
+		
+		
+		int previousXpos = (int) (screenRegion.x + (width*(Xvalue - startIndex - 1)));
+		int Xpos = (int) (screenRegion.x +(width*(Xvalue - startIndex)));		
+		
+		ofLine(previousXpos, screenRegion.y + screenRegion.height - (scale_factor*(rawOnsetFunction[previousIndex]- minimumValue)), 
+			   Xpos,  screenRegion.y + screenRegion.height - (scale_factor*(rawOnsetFunction[Xindex]- minimumValue)) );
+		
+		
+		
+		//median of Onset fn	
+		ofSetColor(0,105,0);		
+		ofLine(previousXpos, screenRegion.y + screenRegion.height - (scale_factor*(medianOnsetFunction[previousIndex]- minimumValue)), 
+			   Xpos,  screenRegion.y + screenRegion.height - (scale_factor*(medianOnsetFunction[Xindex]- minimumValue)) );
+		
+		
+		if (medianOnsetRecorded[Xindex] == true){
+			ofSetColor(0,255,0);
+			ofCircle(Xpos, screenRegion.y + screenRegion.height - (scale_factor*(medianOnsetFunction[Xindex]- minimumValue)) , 4);
+		}
+		
+		
+		ofSetColor(0,0,160);
+		ofLine(previousXpos, screenRegion.y + screenRegion.height - (scale_factor*(highSlopeOnsetFunction[previousIndex]- minimumValue)), 
+			   Xpos,  screenRegion.y + screenRegion.height - (scale_factor*(highSlopeOnsetFunction[Xindex]- minimumValue)) );
+		
+		//bright blue - slope based onsets
+		if (highSlopeOnsetRecorded[Xindex] == true){
+			ofSetColor(0,0,255);
+			ofCircle(Xpos, screenRegion.y + screenRegion.height - (scale_factor*(highSlopeOnsetFunction[Xindex]- minimumValue)) , 4);
+		}
+		
+		//long term average in dull grey
+		ofSetColor(100);
+		ofLine(previousXpos, screenRegion.y + screenRegion.height - (scale_factor*(aubioLongTermAverage[previousIndex]- minimumValue)), 
+			   Xpos,  screenRegion.y + screenRegion.height - (scale_factor*(aubioLongTermAverage[Xindex]- minimumValue)) );
+		
+		
+		ofSetColor(255,100,0);
+		
+	}//end for Xvalue (across the recent observations of osc data)
+	
+	
+		/*
+	//label y axis
+	int axisHeight, stepSize;
+	ofSetColor(255,255,255);
+	stepSize = 1000;
+	
+	while((difference / stepSize) < 3)
+		stepSize /= 2;
+	
+	while ((difference / stepSize) > 7)// maximum 6 numbers to display
+		stepSize *= 2;
+	
+
+	for (axisHeight = 0; axisHeight < maximumDetectionFunction; axisHeight += stepSize){
+		ofDrawBitmapString( ofToString((int)axisHeight), ofGetWidth()-50,
+						   (int) ((TEXT_HEIGHT/2) +(screenRegion.height - (scale_factor*(axisHeight- minimumValue)))) );
+	}
+	
+	for (axisHeight = max(0, (int)minimumDetectionFunction); axisHeight > min(0, (int)minimumDetectionFunction); axisHeight -= stepSize){
+		ofDrawBitmapString( ofToString((int)axisHeight), ofGetWidth()-50,
+						   (int) ((TEXT_HEIGHT/2) +(screenRegion.height - (scale_factor*(axisHeight- minimumValue)))) );
+	}
+
+	
+	//label x axis
+	stepSize = 20;//need to make sure not too many of these:
+	
+	while((amplitudeNumber / stepSize) < 4)
+		stepSize /= 2;
+	
+	while ((amplitudeNumber / stepSize) > 8)
+		stepSize *= 2;
+	
+	int labelIndex = onsetIndex - (onsetIndex % stepSize);
+	for (int y = labelIndex; y > onsetIndex - amplitudeNumber; y -= stepSize){
+		ofDrawBitmapString( ofToString((int)y), (int) (width*(amplitudeNumber - (onsetIndex - y))), (int) ((TEXT_HEIGHT+2) + (screenRegion.height - (scale_factor*(0 - minimumValue)))) );
+	}
+	
+	*/
+	
+	//play position
+	ofSetColor(255,255,255);
+	playPositionFrames = playPosition * frameCountIndex;
+	ofLine(screenRegion.x + width*(playPositionFrames-startIndex), screenRegion.y , screenRegion.x + width*(playPositionFrames-startIndex), screenRegion.y + screenRegion.height);
+	
+	
+}//end draw onset fn
+
+
+
+
 void ofxAubioOnsetDetection::drawChromaOnsetData(const int& startIndex, const int& endIndex){
 		
 	int chromaIndex = chromaOnsets.size()/2;
@@ -413,6 +570,8 @@ void ofxAubioOnsetDetection::setDrawParams(){
 void ofxAubioOnsetDetection::windowResized(const int& w, const int& h){
 	screenWidth = ofGetWidth();
 	screenHeight = ofGetHeight();
+	window.resized(w, h);
+	fullScreen.resized(w, h);
 }
 
 

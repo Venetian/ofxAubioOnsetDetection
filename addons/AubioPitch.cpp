@@ -44,7 +44,7 @@ bool AubioPitch::processFrame(float* frame, int size){//
 			// block loop /
 			pitch = aubio_pitchdetection(pitchDetect, vec);
 			pitchDetected = true;
-			printf("Pitch detected %f\n", pitch);
+//			printf("Pitch detected %f\n", pitch);
 //			outlet_float(x->pitchOutlet, pitch);
 			
 			// end of block loop 
