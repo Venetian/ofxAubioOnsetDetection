@@ -97,9 +97,13 @@ public:
 	ChromaOnsetVector chromaOnsets;
 	
 	void checkChromaAndPitch(float* tmpFrame, const int& n);
+	
 	void drawChromaOnsetData(const int& startIndex, const int& endIndex);
+	void drawChromaOnsetData(const int& startIndex, const int& endIndex, const ofxWindowRegion& screenRegion);
+	
 	DrawOnsetParameters drawParams;
 	void setDrawParams();
+	void setDrawParams(const ofxWindowRegion& screenRegion);
 	
 	AubioPitch pitchDetector;
 	float	maximumAubioPitch;
@@ -110,6 +114,7 @@ public:
 	void windowResized(const int& w, const int& h);
 	
 	ofxWindowRegion window;
+	ofxWindowRegion fullScreen;
 };
 
 

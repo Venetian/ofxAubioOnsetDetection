@@ -238,7 +238,8 @@ void ofxAubioOnsetDetection::drawOnsetDetectionScrolling(){
 	int startFrame = (int)(playPositionFrames/amplitudeNumber)* amplitudeNumber;
 	
 	drawOnsetDetection(startFrame, startFrame+amplitudeNumber, window);
-		
+//	drawOnsetDetection(startFrame, startFrame+amplitudeNumber);
+	
 }//end draw onset fn
 
 
@@ -383,8 +384,8 @@ void ofxAubioOnsetDetection::drawOnsetDetection(int startIndex, int endIndex){
 void ofxAubioOnsetDetection::drawOnsetDetection(int startIndex, int endIndex, const ofxWindowRegion& screenRegion){
 	
 	ofBackground(0);
-	setDrawParams();
-	ofSetColor(160,160,0);
+	setDrawParams(screenRegion);
+	ofSetColor(100,150,250);
 	screenRegion.drawOutline();
 	
 	int tmpIndex = onsetIndex;
@@ -394,14 +395,7 @@ void ofxAubioOnsetDetection::drawOnsetDetection(int startIndex, int endIndex, co
 	float difference = maximumValue - minimumValue;
 	float scale_factor = screenRegion.height/ difference;
 	
-	//draw axis
-	ofSetColor(255,255,255);
-	ofDrawBitmapString("window region"+ofToString(screenRegion.x), 20, 20);
-	
-	ofLine(screenRegion.x + 0, screenRegion.y + screenRegion.height - (scale_factor*(0 - minimumValue)), 
-		   screenRegion.x + (int) (width*(amplitudeNumber)),  screenRegion.y + screenRegion.height - (scale_factor*(0 - minimumValue)) );
-	
-	//drawChromaOnsetData(startIndex, endIndex);
+	drawChromaOnsetData(startIndex, endIndex, screenRegion);
 	
 	endIndex = min(endIndex, startIndex+amplitudeNumber);
 	
@@ -557,6 +551,52 @@ void ofxAubioOnsetDetection::drawChromaOnsetData(const int& startIndex, const in
 }//end draw chroma
 
 
+
+
+void ofxAubioOnsetDetection::drawChromaOnsetData(const int& startIndex, const int& endIndex, const ofxWindowRegion& screenRegion){
+	
+	int chromaIndex = chromaOnsets.size()/2;
+	while (chromaIndex > 0 && chromaOnsets[chromaIndex].onsetIndex > startIndex)
+		chromaIndex--;
+	
+	while (chromaIndex < chromaOnsets.size() && chromaOnsets[chromaIndex].onsetIndex < startIndex)
+		chromaIndex++;
+	
+	
+	while (chromaIndex < chromaOnsets.size() && chromaOnsets[chromaIndex].chromaCalculated && chromaOnsets[chromaIndex].onsetIndex < endIndex) {
+		
+		ofSetColor(255,100,255);
+		
+		int Xindex = chromaOnsets[chromaIndex].onsetIndex;
+		int Xvalue = endIndex - Xindex;
+		
+		for (int j = 0;j < 12;j++){
+			ofSetColor(0,0,255*chromaOnsets[chromaIndex].chromaValues[11-j], 20);
+			ofRect(screenRegion.x + drawParams.width*(amplitudeNumber - Xvalue), screenRegion.y + screenRegion.height*j/12.0, 6, screenRegion.height/12);
+		}
+		
+		ofCircle(screenRegion.x + drawParams.width*(amplitudeNumber - Xvalue), screenRegion.y + screenRegion.height - (drawParams.scale_factor*(highSlopeOnsetFunction[Xindex]- drawParams.minimumValue)) , 4);
+		
+		//now do pitch in log freq
+		float heightFactor = 0;
+		if (chromaOnsets[chromaIndex].aubioPitch > 0)
+			heightFactor = log(chromaOnsets[chromaIndex].aubioPitch) / log(maximumAubioPitch);
+		heightFactor = 1 - heightFactor;
+		//red lines for freq
+		ofSetColor(255,0,0);
+		//ofSetLineWidth(8);
+		ofLine(screenRegion.x + drawParams.width*(amplitudeNumber - Xvalue), screenRegion.y + screenRegion.height*heightFactor, 
+			   screenRegion.x + drawParams.width*(amplitudeNumber - Xvalue) + 50, screenRegion.y + screenRegion.height*heightFactor);
+		
+		ofSetColor(0,0,255);
+		ofDrawBitmapString(ofToString(chromaOnsets[chromaIndex].aubioPitch, 1) , screenRegion.x + drawParams.width*(amplitudeNumber - Xvalue) + 4, screenRegion.y + screenRegion.height*heightFactor - 4);
+		chromaIndex++;
+	}
+	
+	
+	
+}//end draw chroma
+
 void ofxAubioOnsetDetection::setDrawParams(){
 	
 	drawParams.width = screenWidth / (float) amplitudeNumber;	
@@ -564,6 +604,15 @@ void ofxAubioOnsetDetection::setDrawParams(){
 	drawParams.minimumValue = 0;//minimumDetectionFunction ;
 	drawParams.difference = drawParams.maximumValue - drawParams.minimumValue;
 	drawParams.scale_factor = screenHeight/ drawParams.difference;
+}
+
+void ofxAubioOnsetDetection::setDrawParams(const ofxWindowRegion& screenRegion){
+	
+	drawParams.width = screenRegion.width / (float) amplitudeNumber;	
+	drawParams.maximumValue = onsetDetector->maximumDetectionValue;
+	drawParams.minimumValue = 0;//minimumDetectionFunction ;
+	drawParams.difference = drawParams.maximumValue - drawParams.minimumValue;
+	drawParams.scale_factor = screenRegion.height/ drawParams.difference;
 }
 
 

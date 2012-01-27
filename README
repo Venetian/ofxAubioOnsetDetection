@@ -1,1 +1,13 @@
-Onset detection in OF - uses Paul Brossier's Aubio library
+Onset detection in OF
+
+Dependencies
+
+ofxWindowRegion to draw in part of screen
+
+ofxAudioFileLoader - Loads basic file
+include Chromagramm folder
+
+AubioFullOSXUni - compiled version of Aubio for the onset and pitch analysis
+
+ofxFileDialog - to open files using key command 'o'
+
