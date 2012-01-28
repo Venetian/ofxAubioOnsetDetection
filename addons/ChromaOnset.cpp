@@ -9,6 +9,12 @@
 
 #include "ChromaOnset.h"
 
+//stores the information about our onset event
+//when it happened
+//what the chromagram was immeditaely after 
+//what the pitch was using AubioPitch class
+
+//FrameHolder holds the audio samples needed to do the harmonic analysis after the fact
 
 ChromaOnset::ChromaOnset(){
 	frameTime = 0;

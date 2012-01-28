@@ -18,7 +18,7 @@ ofxAubioOnsetDetection::ofxAubioOnsetDetection(){
 	onsetDetector->initialise();
 	
 	amplitudeNumber = 256;//number of amplitudes shown on screen
-
+	maximumAubioPitch = 1600;//max pitch shown inside window
 
 //	useMedianOnsetDetection = true;
 	onsetIndex = 0;
@@ -26,11 +26,10 @@ ofxAubioOnsetDetection::ofxAubioOnsetDetection(){
 	playPositionFrames = 0;
 	playPosition = 0;
 	
-	maximumAubioPitch = 1600;
-	
 	screenWidth = ofGetWidth();
 	screenHeight = ofGetHeight();
 	
+	//each file has onset window to be displayed in
 	window.setToRelativeSize(0.1, 0.1, 0.8, 0.3);
 	
 }
