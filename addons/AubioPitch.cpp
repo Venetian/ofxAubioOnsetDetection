@@ -9,29 +9,39 @@
 
 #include "AubioPitch.h"
 
+
+
+//HERE I'm using doPitchDetection as it avoids the buffering problem
+//I just fill the buffer with what samples I want and get pitch returned.
+
+
 AubioPitch::AubioPitch(){
-	bufsize   = 2048;
+	bufsize   = 4096;
 	hopsize   = bufsize / 2;
 	pitch = 0.0;
 	
-	aubio_pitchdetection_type type_pitch = aubio_pitch_yinfft;
+	aubio_pitchdetection_type type_pitch = aubio_pitch_yinfft;// now changed
 	aubio_pitchdetection_mode mode_pitch = aubio_pitchm_freq;
 //	bufsize*4 below
 	pitchDetect = new_aubio_pitchdetection(bufsize, hopsize, 1, 44100., type_pitch, mode_pitch);
 	
-	aubio_pitchdetection_set_yinthresh(pitchDetect, 0.7);
+	aubio_pitchdetection_set_yinthresh(pitchDetect, 0.85);
 	
-	vec = (fvec_t *)new_fvec(bufsize,1);//anr changed from hopsize
+	vec = (fvec_t *)new_fvec(hopsize,1);//anr changed from hopsize
+	
 	pos = 0;
 }
 
 AubioPitch::~AubioPitch(){
 	del_aubio_pitchdetection(pitchDetect);
+	del_fvec(vec);
+	aubio_cleanup();
 	//delk fvec
 	
 }
 
 bool AubioPitch::processFrame(float* frame, int size){//
+	//note this no longer called
 	int j;
 	bool pitchDetected = false;
 	//smpl_t pitch;
@@ -40,11 +50,14 @@ bool AubioPitch::processFrame(float* frame, int size){//
 		
 		fvec_write_sample(vec, frame[j], 0, pos);
 
-		if (pos == hopsize-1) {         
+		if (pos == hopsize-1) {  //anr recent change from hopsize       
 			// block loop /
+			
 			pitch = aubio_pitchdetection(pitchDetect, vec);
 			pitchDetected = true;
-//			printf("Pitch detected %f\n", pitch);
+			printf("PITCH IS %f\n", pitch);
+		
+			//			printf("Pitch detected %f\n", pitch);
 //			outlet_float(x->pitchOutlet, pitch);
 			
 			// end of block loop 
@@ -55,6 +68,29 @@ bool AubioPitch::processFrame(float* frame, int size){//
 	}
 	return pitchDetected;
 	
+}
+
+//anr idea of adding to buffer
+void AubioPitch::addToBuffer(float* tmpFrame, const int& n){
+	for (int j=0;j < n;j++) {
+		fvec_write_sample(vec, tmpFrame[j], 0, pos);
+		
+		if (pos == hopsize - 1){
+			//pitch = aubio_pitchdetection(x->o,x->vec);
+			//outlet_float(x->pitchOutlet, pitch);
+			
+			pitch = aubio_pitchdetection(pitchDetect, vec);
+			pos = -1;
+		}
+		
+		pos++;
+	}
+}
+
+float AubioPitch::getPitch(){
+//float newPitch = aubio_pitchdetection(pitchDetect, vec);
+//	return newPitch;
+	return pitch;
 }
 
 //this function is more useful here
@@ -69,15 +105,45 @@ float AubioPitch::doPitchDetection(float* frame, const int& length){
 	if (length == bufsize){
 		fvec_t* tmpVec;
 		tmpVec = new_fvec(bufsize,1);
-		for (int j =0;j < length;j++)
+		for (int j =0;j < length;j++){
 			fvec_write_sample(tmpVec, frame[j], 0, j);
-		
-		
+		//	printf("vec[%i] = %.3f\n", j, frame[j]);
+		}
 		newPitch = aubio_pitchdetection(pitchDetect, tmpVec);
 	//	printf("NEW PITCH FOUND %f\n", newPitch);
 	}
 	return newPitch;
 }
+
+
+//float AubioPitch::getPitchDetectedFromBuffer(float* frame, const int& length){
+	
+//	smpl_t pitch = 0.;
+/*	fvec_t * buf;
+	for (int i = 0;i < length;i++){
+		buf[i] = frame[i];
+	}
+*/	
+
+/*	if (length == bufsize){
+		pitch = aubio_pitchyinfft_detect(pitchDetect->yinfft, buf, pitchDetect->yinthres);
+	
+		if (pitch > 0){
+			pitch = pitchDetect->srate/(pitch + 0.);
+		} else {
+			pitch = 0.;
+		}
+		
+	}//end if right size
+	*/
+//	return pitch;
+	
+//}
+
+
+
+
+
 
 /*This is the fvec_t defn from aubio:
  AUBIO f_vec

@@ -9,6 +9,8 @@
 
 #include "AubioOnsetDetector.h"
 
+static bool printOnsetInfo = false;
+
 AubioOnsetDetector :: AubioOnsetDetector(){
 	buffersize = 1024;
 	hopsize = 512;
@@ -20,7 +22,8 @@ AubioOnsetDetector :: AubioOnsetDetector(){
 		
 		threshold = 1;
 		threshold2 = -70.;
-
+	
+	maximumDetectionValue = 10.0; 
 	resetValues();
 	thresholdRelativeToMedian = 1.1;
 	cutoffForRepeatOnsetsMillis = 100;
@@ -29,15 +32,23 @@ AubioOnsetDetector :: AubioOnsetDetector(){
 	
 	detectionTriggerRatio = 0.5f;
 	detectionTriggerThreshold = 10;
+	
+	
 
 }
 
 AubioOnsetDetector :: ~AubioOnsetDetector(){
 		aubio_onsetdetection_free (o);
-		
+		del_aubio_pvoc(pv);
+		del_aubio_peakpicker(parms);
+		del_fvec(vec);
+		aubio_cleanup();
 }
 
 void AubioOnsetDetector :: resetValues(){
+	if (printOnsetInfo)
+		printf("Aubio Onset RESET VALUES\n");
+	
 	rawDetectionValue = 1;
 	peakPickedDetectionValue = 1;
 	medianDetectionValue = 10.;
@@ -51,14 +62,9 @@ void AubioOnsetDetector :: resetValues(){
 	bestSlopeMedian = 10;
 	slopeFallenBelowMedian = true;
 	maximumDetectionValue = 10.0;
-
-	
 	
 	for (int i = 0;i< numberOfDetectionValues;i++)
 		recentRawDetectionValues[i] = 1;
-	
-	
-	
 }
 
 
@@ -226,8 +232,11 @@ bool AubioOnsetDetector :: checkForMedianOnset(const float& dfvalue){
 	else 
 		medianDetectionValue += 0.01*medianSpeed*(dfvalue - medianDetectionValue);
  
-	if (dfvalue > maximumDetectionValue)
+	if (dfvalue > maximumDetectionValue){
 		maximumDetectionValue = dfvalue;
+		if (printOnsetInfo)	
+			printf("DF value causes new max %f\n", maximumDetectionValue);
+	}
  
  
  currentFrame++;
@@ -239,82 +248,90 @@ return onsetDetected;
  
  
  
- double AubioOnsetDetector::getBestSlopeValue(const float& dfvalue){
- //the idea is we want a high slope
- recentRawDetectionValues[recentValueIndex] = dfvalue;
- double bestValue = 0;
- for (int i = 1;i < numberOfDetectionValues;i++){
- double angle = 0;
- int otherIndex = (recentValueIndex - i + numberOfDetectionValues)%numberOfDetectionValues;
- double testValue = 0;
- if (otherIndex > 0 && recentRawDetectionValues[otherIndex] > 0){
- angle = atan((float)(i * dfvalue)/ (numberOfDetectionValues*(dfvalue-recentRawDetectionValues[otherIndex])) );
- testValue = (dfvalue - recentRawDetectionValues[otherIndex]) * cos(angle);
- }
- 
- if (testValue > bestValue)
- bestValue = testValue;
- }
- 
- recentValueIndex++;
- 
- if (recentValueIndex == numberOfDetectionValues)
- recentValueIndex = 0;
- 
- 
- return bestValue;
- 
- }
- 
- 
- 
- 
- bool AubioOnsetDetector :: checkForSlopeOnset(const float& bestValue){
- bool onsetDetected = false;
- //check for onset relative to our processed slope function
- //a mix between increase in value and the gradient of that increase
- 
- if (bestValue > bestSlopeMedian * thresholdRelativeToMedian && //better than recent average 
- 1000*framesToSeconds(currentFrame - lastSlopeOnsetFrame) > cutoffForRepeatOnsetsMillis //after cutoff time
- && slopeFallenBelowMedian // has had onset and fall away again
- && bestValue > detectionTriggerThreshold * detectionTriggerRatio //longer term ratio of winning onsets 
- ){
- //	printf("frame diff between onsets %6.1f", (1000*framesToSeconds(currentFrame - lastMedianOnsetFrame)) );
- onsetDetected = true;
- lastSlopeOnsetFrame = currentFrame;
- slopeFallenBelowMedian = false;
- 
- updateDetectionTriggerThreshold(bestValue);
- }
- 
- 
-	 if (bestValue > bestSlopeMedian){
-		bestSlopeMedian += (bestValue - bestSlopeMedian)*0.04;//was 1.1
-	 }
-		else{
-			bestSlopeMedian *= 0.99;
-			slopeFallenBelowMedian = true;;
-		}
+double AubioOnsetDetector::getBestSlopeValue(const float& dfvalue){
 	
-	 //bestSlopeMedian += 0.02* (bestValue - bestSlopeMedian);
-	 
-	 
- return onsetDetected;
- }
+//the idea is we want a high slope
+recentRawDetectionValues[recentValueIndex] = dfvalue;
+double bestValue = 0;
+	
+	for (int i = 1;i < numberOfDetectionValues;i++){
+		double angle = 0;
+		int otherIndex = (recentValueIndex - i + numberOfDetectionValues)%numberOfDetectionValues;
+		double testValue = 0;
+		
+		if (otherIndex > 0 && recentRawDetectionValues[otherIndex] > 0){
+			angle = atan((float)(i * dfvalue)/ (numberOfDetectionValues*(dfvalue-recentRawDetectionValues[otherIndex])) );
+			testValue = (dfvalue - recentRawDetectionValues[otherIndex]) * cos(angle);
+		}
+
+		if (testValue > bestValue)
+			bestValue = testValue;
+	}
+
+recentValueIndex++;
+
+if (recentValueIndex == numberOfDetectionValues)
+recentValueIndex = 0;
+
+
+return bestValue;
+
+}
  
  
- void AubioOnsetDetector::updateDetectionTriggerThreshold(const float& val){
- float detectionAdaptSpeed = 0.05;//moving average, roughly last twenty onsets
- detectionTriggerThreshold *= 1- detectionAdaptSpeed;
- detectionTriggerThreshold += (val * detectionAdaptSpeed);
- }
  
 
-double  AubioOnsetDetector::framesToSeconds(float frames){
+bool AubioOnsetDetector :: checkForSlopeOnset(const float& bestValue){
+bool onsetDetected = false;
+//check for onset relative to our processed slope function
+//a mix between increase in value and the gradient of that increase
+
+	if (bestValue > bestSlopeMedian * thresholdRelativeToMedian && //better than recent average 
+		1000*framesToSeconds(currentFrame - lastSlopeOnsetFrame) > cutoffForRepeatOnsetsMillis //after cutoff time
+		&& slopeFallenBelowMedian // has had onset and fall away again
+		&& bestValue > detectionTriggerThreshold * detectionTriggerRatio //longer term ratio of winning onsets 
+		){
+		//	printf("frame diff between onsets %6.1f", (1000*framesToSeconds(currentFrame - lastMedianOnsetFrame)) );
+		onsetDetected = true;
+		lastSlopeOnsetFrame = currentFrame;
+		slopeFallenBelowMedian = false;
+
+		updateDetectionTriggerThreshold(bestValue);
+	}
+
+
+	if (bestValue > bestSlopeMedian){
+		bestSlopeMedian += (bestValue - bestSlopeMedian)*0.04;//was 1.1
+	}
+	else{
+		bestSlopeMedian *= 0.99;
+		slopeFallenBelowMedian = true;;
+	}
+
+ //bestSlopeMedian += 0.02* (bestValue - bestSlopeMedian);
+ 
+ 
+	return onsetDetected;
+}
+ 
+ 
+void AubioOnsetDetector::updateDetectionTriggerThreshold(const float& val){
+	float detectionAdaptSpeed = 0.05;//moving average, roughly last twenty onsets
+	detectionTriggerThreshold *= 1- detectionAdaptSpeed;
+	detectionTriggerThreshold += (val * detectionAdaptSpeed);
+}
+ 
+
+double  AubioOnsetDetector::framesToSeconds(const float& frames){
 	double seconds = frames * buffersize / 44100.;
 	return seconds;
 }
-
+/*
+double  AubioOnsetDetector::framesToMillis(const float& frames){
+	double seconds = frames * buffersize * 1000.0 / 44100.;
+	return seconds;
+}
+*/
 float AubioOnsetDetector :: getRawDetectionFrame(){
 return rawDetectionValue;	
 }

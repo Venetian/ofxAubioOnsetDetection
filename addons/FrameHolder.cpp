@@ -12,9 +12,9 @@
 FrameHolder::FrameHolder(){
 	sizeOfFrame = 0;
 	sizeOfFvec = 0;
-	frame.reserve(2048); 
+	frame.reserve(4096); 
 //	buffersize = 8192;
-
+	frameCounter = 0;
 //	vec = (fvec_t *)new_fvec(buffersize,1);
 	//printf("initialise frameholder\n");
 }
@@ -22,7 +22,7 @@ FrameHolder::FrameHolder(){
 
 void FrameHolder::deleteFrame(){
 	frame.clear();
-
+	//printf("clear frame\n");
 }
 
 

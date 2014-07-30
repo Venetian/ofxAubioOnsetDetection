@@ -12,9 +12,9 @@
 #define  FRAME_HOLDER_H
 
 #include "ofMain.h"
-#include "chromaGram.h"
-#include "AubioPitch.h"
-#include "aubio.h"
+//#include "chromaGram.h"
+//#include "AubioPitch.h"
+//#include "aubio.h"
 
 class FrameHolder {
 public:
@@ -28,6 +28,7 @@ public:
 	
 	bool sizeEquals(const int& length);
 	
+	int frameCounter;
 	//_fvec_t aubioFvec;
 //	fvec_t *vec;
 	

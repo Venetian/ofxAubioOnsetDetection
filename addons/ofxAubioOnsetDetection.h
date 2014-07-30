@@ -11,13 +11,17 @@
 #ifndef OFX_AUBDIO_ONSET_DETECTION_H_
 #define OFX_AUBIO_ONSET_DETECTION_H_
 
-#define NUM_DETECTION_SAMPLES 64000
+#pragma once
+
+#define NUM_DETECTION_SAMPLES 24000
 #define TEXT_HEIGHT 16
 
 #include "ofMain.h"
 #include "AubioOnsetDetector.h"
 #include "ChromaOnset.h"
 #include "ofxWindowRegion.h"
+#include "AubioPitch.h"
+#include "Chromagram.h"
 
 //#include "OnsetDetectionFunction.h"
 
@@ -32,17 +36,18 @@ struct DrawOnsetParameters{
 	float minimumValue;// = 0;//minimumDetectionFunction ;
 	float difference;// = maximumValue - minimumValue;
 	float scale_factor;// = screenHeight/ difference;
+	int windowStartFrame;
 };
 
 class ofxAubioOnsetDetection{
 public:
 	ofxAubioOnsetDetection();
 	~ofxAubioOnsetDetection();
-	AubioOnsetDetector	*onsetDetector;
+	AubioOnsetDetector	onsetDetector;
 	//OnsetDetectionFunction *qmOnsetDetector;
 	
 	void reset();
-	
+	void initialiseValues();
 	double dfSample;
 	
 	void processFrame(double* frame, const int& n);
@@ -61,6 +66,8 @@ public:
 
 	void drawOnsetDetection();
 	void drawOnsetDetectionScrolling();//float of how far thru file - e.g 0.6 60% through
+	void drawScrollLine(const int& startIndex, const ofxWindowRegion& screenRegion);
+	
 	void drawOnsetDetection(int startIndex, int endIndex);
 	void drawOnsetDetection(int startIndex, int endIndex, const ofxWindowRegion& screenRegion);//overloaded
 	int onsetIndex, frameCountIndex;
@@ -91,22 +98,35 @@ public:
 	DoubleVector highSlopeOnsetsFrames;
 	DoubleVector highSlopeOnsetsMillis;
 	double framesToMillis(const double& frameCount);
-	double playPosition, playPositionFrames;
+	double playPosition, playPositionFrames;//play position is between 0 and 1 of the file 
 	
 	typedef std::vector<ChromaOnset> ChromaOnsetVector;
 	ChromaOnsetVector chromaOnsets;
+	
+	int trackType;
+	
+	void printChromaInfo();
 	
 	void checkChromaAndPitch(float* tmpFrame, const int& n);
 	
 	void drawChromaOnsetData(const int& startIndex, const int& endIndex);
 	void drawChromaOnsetData(const int& startIndex, const int& endIndex, const ofxWindowRegion& screenRegion);
 	
-	DrawOnsetParameters drawParams;
+	void drawOnsetStripes(int chromaIndex, const int& frameEndIndex, const ofxWindowRegion& screenRegion);
+	void drawChromaStripes(int chromaIndex, const int& frameEndIndex, const ofxWindowRegion& screenRegion);
+	void drawPitchLines(int chromaIndex, const int& frameEndIndex, const ofxWindowRegion& screenRegion);
+	
+	
+	DrawOnsetParameters drawParams ;
 	void setDrawParams();
 	void setDrawParams(const ofxWindowRegion& screenRegion);
+	void drawOutlineAndSetParams(const ofxWindowRegion& screenRegion);
+	
+	ChromaOnset* chromaOnsetPtr;
 	
 	AubioPitch pitchDetector;
-	float	maximumAubioPitch;
+	//AubioPitch pitchDetectorTwo;
+	float	maximumAubioPitch, minimumAubioPitch;
 	
 	//basic screen stuff
 	float screenWidth;//= ofGetWidth();
@@ -115,6 +135,7 @@ public:
 	
 	ofxWindowRegion window;
 	ofxWindowRegion fullScreen;
+	
 };
 
 

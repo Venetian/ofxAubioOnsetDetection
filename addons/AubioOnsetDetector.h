@@ -28,7 +28,8 @@ public:
 	
 	float getRawDetectionFrame();
 	float getPeakPickedDetectionFrame();
-	double framesToSeconds(float frames);
+	double framesToSeconds(const float& frames);
+//	double framesToMillis(const float& frames);
 //	boolean getIsOnset();
 	
 	

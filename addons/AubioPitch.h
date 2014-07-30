@@ -37,5 +37,10 @@ public:
 	
 	float doPitchDetection(float* frame, const int& length);
 	
+	float getPitch();
+	void addToBuffer(float* tmpFrame, const int& n);
+	
+	//float getPitchDetectedFromBuffer(float* frame, const int& length);
+	
 };
 #endif

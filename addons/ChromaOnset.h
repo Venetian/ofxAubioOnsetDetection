@@ -15,6 +15,21 @@
 //#include "AubioPitch.h"
 #include "FrameHolder.h"
 
+/*
+//could switch to a struct to hold this?
+ 
+ struct OnsetEvent{
+	double millisTime;
+	int frameTime;
+	
+	bool chromaCalculated;
+	float chromaValues[12];
+	
+	bool aubioPitchFound;
+	float aubioPitch;
+};
+*/
+
 class ChromaOnset {
 	public:
 	ChromaOnset();
@@ -24,21 +39,35 @@ class ChromaOnset {
 	//chromagram chroma;
 	bool chromaCalculated;
 	int chromaSize;
+	int pitchFrameCounter;
+	
+	//move chromagram out of this class 
+	//Chromagram cgram;
+	
 	typedef std::vector<float> FloatVector;
-	FloatVector chromaSamples;
-	bool processFrame(float* frame, const int& length);
-//	void calculateChroma(float* frame, const int& length);
-
-	Chromagram cgram;
-	
 	FloatVector chromaValues;
+	FloatVector quantisedChromaValues;
 	
-	float holder[512];
-	
+	double getQuantisedDistance(ChromaOnset& secondChromaOnset);
+	double getChromaQuantisedDistance(float* quantisedChromagramTwo);
 	//also do pitch detection using this class
 	//AubioPitch *aubioPitchDetector;
 	bool aubioPitchFound;
 	float aubioPitch;
+	
+	bool matched;//just for drawing
+
+	
+	bool processFrame(float* frame, const int& length);
+//	void calculateChroma(float* frame, const int& length);
+
+	double timeDistanceMillis(const ChromaOnset& secondChromaOnset);
+	double pitchDistance(const ChromaOnset& secondChromaOnset);
+	double chromaDotProductDistance(const ChromaOnset& secondChromaOnset);
+
+
+	Chromagram* cgramPtr;
+	void deleteChromagram();
 	
 	FrameHolder onsetFrame;
 	
